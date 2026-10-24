@@ -226,3 +226,20 @@ export interface UserAuthContext {
   apaar_id?: string;
   student_name?: string;
 }
+
+export interface StudentRegistrationPayload {
+  full_name: string;
+  mobile_number: string;
+  email?: string;
+  aicte_id: string;
+  program?: string;
+  department: string;
+  level?: string;
+  academic_year?: string;
+  enrollment_no?: string;
+  apaar_id?: string;
+  gender?: string;
+  category?: string;
+  date_of_birth?: string;
+}
+

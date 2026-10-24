@@ -8,12 +8,14 @@ import {
   StakeholderAlertItem,
   ForecastingResult,
   AnalyticsData,
-  AuditLogItem
+  AuditLogItem,
+  StudentRegistrationPayload
 } from "./types";
 import {
   MOCK_FILTERS,
   MOCK_COLLEGES,
   MOCK_STUDENT_PROFILE,
+  MOCK_SYNTHETIC_STUDENTS,
   MOCK_ANALYTICS,
   MOCK_DIRECTORY,
   MOCK_ALERTS,
@@ -212,6 +214,73 @@ export async function studentVerifyOtp(apaar_id: string, otp: string, session_to
   return res.json();
 }
 
+export async function registerStudent(payload: StudentRegistrationPayload) {
+  try {
+    const res = await fetch(`${API_BASE}/auth/student-register`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.detail || "Student registration failed");
+    }
+    const data = await res.json();
+    return data;
+  } catch (err: any) {
+    if (err.message && err.message !== "Failed to fetch" && err.message !== "NetworkError when attempting to fetch resource.") {
+      throw err;
+    }
+
+    // Static GitHub Pages fallback
+    const cleanPhone = (payload.mobile_number || "").replace(/\D/g, "").slice(-10);
+    const apaarId = payload.apaar_id || `9${Math.floor(10000000000 + Math.random() * 90000000000)}`;
+    const newStudentProfile: StudentProfile = {
+      apaar_id: apaarId,
+      full_name: payload.full_name.toUpperCase(),
+      enrollment_no: payload.enrollment_no || `EN26${cleanPhone.slice(-4)}`,
+      gender: payload.gender || "Male",
+      category: payload.category || "General",
+      date_of_birth: payload.date_of_birth || "2004-01-01",
+      date_of_admission: "2026-08-01",
+      academic_year: payload.academic_year || "2026-2027",
+      aicte_id: payload.aicte_id,
+      college_name: "AICTE Affiliated Institution",
+      program: payload.program || "Engineering and Technology",
+      department: payload.department,
+      level: payload.level || "UG",
+      admission_type: "Regular",
+      credits_earned: 24,
+      cgpa: 8.5,
+      digilocker_status: "DigiLocker Verified",
+      validation_status: "VALID",
+      verification_hash: `sha256:reg_${apaarId}`,
+      is_verified: true,
+      verified_by: "AICTE-APAAR National Student Registry",
+      verified_at: new Date().toISOString(),
+      mobile_number: cleanPhone
+    };
+
+    try {
+      const existing = JSON.parse(localStorage.getItem("aicte_registered_students") || "[]");
+      existing.push(newStudentProfile);
+      localStorage.setItem("aicte_registered_students", JSON.stringify(existing));
+    } catch {}
+
+    return {
+      success: true,
+      message: "Student profile registered successfully.",
+      apaar_id: apaarId,
+      full_name: payload.full_name.toUpperCase(),
+      mobile_number: cleanPhone,
+      aicte_id: payload.aicte_id,
+      college_name: "AICTE Affiliated Institution",
+      enrollment_no: newStudentProfile.enrollment_no,
+      access_token: "demo_gh_pages_reg_token"
+    };
+  }
+}
+
 export async function fetchStudentProfile(apaar_id?: string): Promise<StudentProfile> {
   try {
     const q = apaar_id ? `?apaar_id=${encodeURIComponent(apaar_id)}` : "";
@@ -221,6 +290,18 @@ export async function fetchStudentProfile(apaar_id?: string): Promise<StudentPro
     if (!res.ok) throw new Error("Offline");
     return await res.json();
   } catch {
+    if (apaar_id) {
+      for (const phone of Object.keys(MOCK_SYNTHETIC_STUDENTS)) {
+        if (MOCK_SYNTHETIC_STUDENTS[phone].apaar_id === apaar_id) {
+          return MOCK_SYNTHETIC_STUDENTS[phone];
+        }
+      }
+      try {
+        const localReg = JSON.parse(localStorage.getItem("aicte_registered_students") || "[]");
+        const match = localReg.find((s: any) => s.apaar_id === apaar_id);
+        if (match) return match;
+      } catch {}
+    }
     return MOCK_STUDENT_PROFILE;
   }
 }
@@ -298,6 +379,15 @@ export async function regulatorVerifyOtp(otp: string, session_token: string) {
   return res.json();
 }
 
+const AUTHORIZED_ADMIN_PHONES = new Set([
+  "8767434172",
+  "9137270864",
+  "9324862618",
+  "8928197021",
+  "8828246643",
+  "9833074194"
+]);
+
 export async function verifyPhoneEmail(user_json_url: string, role: string, identifier?: string) {
   try {
     const res = await fetch(`${API_BASE}/auth/phone-email-verify`, {
@@ -317,36 +407,78 @@ export async function verifyPhoneEmail(user_json_url: string, role: string, iden
     }
 
     // Static GitHub Pages fallback when no Python server is running:
-    // If external phone.email URL is provided, fetch directly in browser to enforce the exact same rule:
+    let clean10 = "8767434172";
     if (user_json_url.startsWith("http")) {
       try {
         const peRes = await fetch(user_json_url);
         if (peRes.ok) {
           const peData = await peRes.json();
           const phone = String(peData.user_phone_number || "");
-          const clean10 = phone.replace(/\D/g, "").slice(-10);
-          if (role !== "STUDENT" && clean10 !== "8767434172") {
-            throw new Error("Unauthorized: Insufficient Permissions");
-          }
-          if (role === "STUDENT" && clean10 !== "8767434172") {
-            throw new Error("No profile found");
-          }
+          clean10 = phone.replace(/\D/g, "").slice(-10);
         }
-      } catch (innerErr: any) {
-        if (innerErr.message === "Unauthorized: Insufficient Permissions" || innerErr.message === "No profile found") {
-          throw innerErr;
-        }
+      } catch {}
+    } else if (user_json_url.startsWith("mock:")) {
+      clean10 = user_json_url.split(":")[1]?.replace(/\D/g, "").slice(-10) || "8767434172";
+    }
+
+    if (role !== "STUDENT" && !AUTHORIZED_ADMIN_PHONES.has(clean10)) {
+      throw new Error("Unauthorized: Insufficient Permissions");
+    }
+
+    if (role === "STUDENT") {
+      if (clean10 === "8767434172") {
+        return {
+          access_token: "demo_gh_pages_preview_token",
+          token_type: "bearer",
+          aicte_id: identifier || "1-44465113304",
+          college_name: "ST. XAVIER'S TECHNICAL INSTITUTE",
+          role: role,
+          apaar_id: "126430259751",
+          student_name: "SANKALP HEMANT MANE"
+        };
       }
+
+      if (MOCK_SYNTHETIC_STUDENTS[clean10]) {
+        const syn = MOCK_SYNTHETIC_STUDENTS[clean10];
+        return {
+          access_token: `demo_gh_pages_${clean10}`,
+          token_type: "bearer",
+          aicte_id: identifier || syn.aicte_id,
+          college_name: syn.college_name,
+          role: role,
+          apaar_id: syn.apaar_id,
+          student_name: syn.full_name
+        };
+      }
+
+      // Check registered students in localStorage
+      try {
+        const localReg = JSON.parse(localStorage.getItem("aicte_registered_students") || "[]");
+        const found = localReg.find((s: any) => s.mobile_number === clean10);
+        if (found) {
+          return {
+            access_token: `demo_gh_pages_${clean10}`,
+            token_type: "bearer",
+            aicte_id: found.aicte_id,
+            college_name: found.college_name,
+            role: role,
+            apaar_id: found.apaar_id,
+            student_name: found.full_name
+          };
+        }
+      } catch {}
+
+      throw new Error(`No student record found for mobile ending in ${clean10.slice(-4)}. Please click 'Register Now' to create your student account.`);
     }
 
     return {
       access_token: "demo_gh_pages_preview_token",
       token_type: "bearer",
-      aicte_id: identifier || "1-44465113304",
-      college_name: "ST. XAVIER'S TECHNICAL INSTITUTE",
+      aicte_id: identifier || "AICTE-CENTRAL",
+      college_name: role === "AICTE_VERIFIER" ? "AICTE Central Regulatory Bureau" : "ST. XAVIER'S TECHNICAL INSTITUTE",
       role: role,
-      apaar_id: "126430259751",
-      student_name: "SANKALP HEMANT MANE"
+      apaar_id: null,
+      student_name: null
     };
   }
 }

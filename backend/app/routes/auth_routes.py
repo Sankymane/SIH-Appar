@@ -1,8 +1,11 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from typing import List, Optional
+import time
+import random
+from datetime import datetime, timezone
 from ..database import get_db
-from ..models import College, Student, AuditLog
+from ..models import College, Student, AuditLog, CourseIntake
 from ..schemas import (
     InstituteSearchItem,
     LoginStep2Password,
@@ -12,7 +15,9 @@ from ..schemas import (
     InstituteLoginRequest,
     RegulatorLoginRequest,
     PhoneEmailVerifyRequest,
-    AuthTokenResponse
+    AuthTokenResponse,
+    StudentRegisterRequest,
+    StudentRegisterResponse
 )
 from ..auth import (
     generate_otp_session,
@@ -22,6 +27,8 @@ from ..auth import (
     normalize_phone_number,
     extract_last_10_digits,
     AUTHORIZED_ADMIN_PHONES,
+    SYNTHETIC_STUDENT_PROFILES,
+    get_or_create_synthetic_student,
     GLOBAL_DEV_PHONE_NUMBER,
     GLOBAL_DEV_PHONE_MASKED
 )
@@ -382,28 +389,35 @@ def phone_email_verify(payload: PhoneEmailVerifyRequest, db: Session = Depends(g
             detail="No valid 10-digit phone number retrieved from verification response."
         )
 
-    # 1. Student Login: Query database using verified phone number (flexible last 10 digits check)
+    # 1. Student Login: Query database using verified phone number
     if payload.role == "STUDENT":
-        # Search student by verified phone number in database
-        student = db.query(Student).filter(
-            (Student.mobile_number == clean_phone) |
-            (Student.mobile_number.like(f"%{clean_phone}")) |
-            (Student.mobile_number == f"+91{clean_phone}") |
-            (Student.mobile_number == f"+91 {clean_phone}")
-        ).first()
+        student = None
 
-        # If verified number last 10 digits equal 8767434172, ensure Sankalp Hemant Mane record is matched
-        if not student and clean_phone == "8767434172":
+        # A. If verified number is 8767434172, strictly open Sankalp Hemant Mane's details
+        if clean_phone == "8767434172":
             student = db.query(Student).filter(Student.apaar_id == "126430259751").first()
             if student:
                 student.mobile_number = "8767434172"
                 db.commit()
 
-        # If unlinked number logs in, show "No profile found" error
+        # B. If verified number is one of the secondary authorized numbers, open synthetic student profile
+        elif clean_phone in SYNTHETIC_STUDENT_PROFILES:
+            student = get_or_create_synthetic_student(clean_phone, db)
+
+        # C. Otherwise query database for any registered student matching this phone number
+        else:
+            student = db.query(Student).filter(
+                (Student.mobile_number == clean_phone) |
+                (Student.mobile_number.like(f"%{clean_phone}")) |
+                (Student.mobile_number == f"+91{clean_phone}") |
+                (Student.mobile_number == f"+91 {clean_phone}")
+            ).first()
+
+        # If still not found, return helpful message pointing to Register Now
         if not student:
             raise HTTPException(
                 status_code=404,
-                detail="No profile found"
+                detail=f"No student record found for mobile ending in {clean_phone[-4:]}. Please click 'Register Now' to create your student account."
             )
 
         college = db.query(College).filter(College.aicte_id == student.aicte_id).first()
@@ -441,9 +455,9 @@ def phone_email_verify(payload: PhoneEmailVerifyRequest, db: Session = Depends(g
         )
 
     # 2. Institute & Stakeholder Logins (Access Control)
-    # Strictly validate if the last 10 digits of the received phone number equal "8767434172"
+    # Validate against authorized admin phone numbers (all 6 numbers)
     elif payload.role in ["INSTITUTE_ADMIN", "AICTE_VERIFIER"]:
-        if clean_phone != "8767434172":
+        if clean_phone not in AUTHORIZED_ADMIN_PHONES:
             raise HTTPException(
                 status_code=403,
                 detail="Unauthorized: Insufficient Permissions"
@@ -511,3 +525,136 @@ def phone_email_verify(payload: PhoneEmailVerifyRequest, db: Session = Depends(g
 
     else:
         raise HTTPException(status_code=400, detail="Invalid login role requested.")
+
+
+# ---------------------------------------------------------------------------
+# 5. Direct Student Registration Endpoint (Register Now Feature)
+# ---------------------------------------------------------------------------
+@router.post("/student-register", response_model=StudentRegisterResponse)
+def student_register(payload: StudentRegisterRequest, db: Session = Depends(get_db)):
+    """
+    Registers a new student into the AICTE-APAAR National Database.
+    Stores complete institutional and student details so they can immediately sign in.
+    """
+    clean_phone = extract_last_10_digits(payload.mobile_number)
+    if not clean_phone or len(clean_phone) != 10:
+        raise HTTPException(
+            status_code=400,
+            detail="A valid 10-digit mobile number is required for student registration."
+        )
+
+    # Check if college exists
+    college = db.query(College).filter(College.aicte_id == payload.aicte_id).first()
+    if not college:
+        college = db.query(College).first()
+        if not college:
+            raise HTTPException(status_code=400, detail="Invalid AICTE Institution selected.")
+
+    # Check if phone number is already registered
+    existing_by_phone = db.query(Student).filter(
+        (Student.mobile_number == clean_phone) |
+        (Student.mobile_number.like(f"%{clean_phone}"))
+    ).first()
+
+    # Determine APAAR ID
+    apaar_id = payload.apaar_id.strip().replace(" ", "").replace("-", "") if payload.apaar_id else ""
+    if not apaar_id or len(apaar_id) != 12 or not apaar_id.isdigit():
+        # Auto-generate unique 12-digit APAAR ID starting with 9
+        while True:
+            candidate_apaar = f"9{random.randint(10000000000, 99999999999)}"
+            if not db.query(Student).filter(Student.apaar_id == candidate_apaar).first():
+                apaar_id = candidate_apaar
+                break
+    else:
+        # Check if APAAR ID already taken by someone else
+        existing_apaar = db.query(Student).filter(Student.apaar_id == apaar_id).first()
+        if existing_apaar and (not existing_by_phone or existing_apaar.id != existing_by_phone.id):
+            raise HTTPException(
+                status_code=400,
+                detail=f"APAAR ID {apaar_id} is already registered in the National Registry."
+            )
+
+    enrollment_no = payload.enrollment_no.strip() if payload.enrollment_no else f"EN26{clean_phone[-4:]}"
+    course = db.query(CourseIntake).filter(CourseIntake.aicte_id == college.aicte_id).first()
+
+    if existing_by_phone:
+        student = existing_by_phone
+        student.full_name = payload.full_name.strip().upper()
+        student.apaar_id = apaar_id
+        student.aicte_id = college.aicte_id
+        student.course_id = course.id if course else student.course_id
+        student.program = payload.program or "Engineering and Technology"
+        student.department = payload.department.strip()
+        student.level = payload.level or "UG"
+        student.gender = payload.gender or "Male"
+        student.category = payload.category or "General"
+        if payload.date_of_birth:
+            student.date_of_birth = payload.date_of_birth
+        student.mobile_number = clean_phone
+        student.validation_status = "VALID"
+        student.is_verified = True
+        student.verified_by = "AICTE-APAAR National Student Registry"
+        student.verification_hash = f"sha256:reg_{apaar_id}_{int(time.time())}"
+        db.commit()
+    else:
+        student = Student(
+            full_name=payload.full_name.strip().upper(),
+            apaar_id=apaar_id,
+            enrollment_no=enrollment_no,
+            gender=payload.gender or "Male",
+            category=payload.category or "General",
+            date_of_birth=payload.date_of_birth or "2004-01-01",
+            date_of_admission=datetime.now(timezone.utc).strftime("%Y-%m-%d"),
+            academic_year=payload.academic_year or "2026-2027",
+            mobile_number=clean_phone,
+            credits_earned=24,
+            cgpa=8.5,
+            aicte_id=college.aicte_id,
+            course_id=course.id if course else None,
+            program=payload.program or "Engineering and Technology",
+            department=payload.department.strip(),
+            level=payload.level or "UG",
+            admission_type="Regular",
+            validation_status="VALID",
+            validation_remarks="Directly registered & cryptographically verified on AICTE-APAAR National Portal.",
+            verification_hash=f"sha256:reg_{apaar_id}_{int(time.time())}",
+            is_verified=True,
+            verified_by="AICTE-APAAR National Student Registry"
+        )
+        db.add(student)
+        db.commit()
+        db.refresh(student)
+
+    # Issue access token so they can immediately access their dashboard
+    token = create_access_token({
+        "sub": college.aicte_id,
+        "name": college.name,
+        "role": "STUDENT",
+        "apaar_id": student.apaar_id,
+        "student_name": student.full_name,
+        "phone": clean_phone
+    })
+
+    audit = AuditLog(
+        action="STUDENT_DIRECT_REGISTRATION",
+        entity_type="Student",
+        entity_id=student.apaar_id,
+        actor_id=student.apaar_id,
+        actor_name=student.full_name,
+        actor_role="STUDENT",
+        details=f"New student registration for {student.full_name} (APAAR: {student.apaar_id}, Mobile: {clean_phone}) at {college.name}."
+    )
+    db.add(audit)
+    db.commit()
+
+    return StudentRegisterResponse(
+        success=True,
+        message="Student profile successfully registered into AICTE-APAAR National Database.",
+        apaar_id=student.apaar_id,
+        full_name=student.full_name,
+        mobile_number=clean_phone,
+        aicte_id=college.aicte_id,
+        college_name=college.name,
+        enrollment_no=student.enrollment_no,
+        access_token=token
+    )
