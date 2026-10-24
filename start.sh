@@ -36,6 +36,10 @@ BACKEND_PID=$!
 
 # Launch frontend
 cd frontend
+if [ ! -d node_modules ]; then
+    echo "      Installing frontend packages (first run)..."
+    npm install
+fi
 npm run dev -- --host 127.0.0.1 --port 5173 &
 FRONTEND_PID=$!
 

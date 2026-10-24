@@ -121,26 +121,27 @@ sih-appar/
 │   │       ├── reports.py            # Excel/CSV compliance exports
 │   │       └── audit.py              # Regulatory audit trail
 │   └── requirements.txt
-├── frontend/
-│   ├── index.html                    # AICTE branded title & favicon
+├── frontend/                         # APAAR Setu frontend (React 19 + Vite 7 + Tailwind v4)
+│   ├── index.html                    # Noto Sans / Noto Sans Devanagari
+│   ├── vite.config.js                # Proxies /api to the backend on :8000
 │   ├── src/
-│   │   ├── App.tsx                   # Main orchestrator & router
-│   │   ├── index.css                 # Master AICTE portal CSS system
-│   │   ├── api.ts                    # Backend API client
-│   │   ├── types.ts                  # TypeScript interfaces
-│   │   └── components/
-│   │       ├── Header.tsx            # AICTE utility bar, masthead, ticker, nav
-│   │       ├── InstitutionsExplorer.tsx # Left sidebar filters + data table
-│   │       ├── CollegeDetailDrawer.tsx  # Intake vs Admitted chart side drawer
-│   │       ├── LoginModal.tsx        # 3-Step Login (Search -> Password -> OTP)
-│   │       ├── InstituteDashboard.tsx   # Core dashboard with 10 requirements
-│   │       ├── StudentUploadModal.tsx   # Single + Bulk CSV/Excel upload
-│   │       ├── AutomatedValidationBanner.tsx # Discrepancy KPI pills & filters
-│   │       ├── VerificationPortal.tsx   # Real-time APAAR lookup & digital identity
-│   │       ├── CertificatePreviewModal.tsx # Sample Degree Certificate preview
-│   │       ├── AuditTrailView.tsx       # RBAC & activity audit log
-│   │       ├── ReportsModal.tsx         # Regulatory reporting export
-│   │       └── AnalyticsCharts.tsx      # Visual capacity & diversity charts
+│   │   ├── App.jsx                   # Role-guarded routes (hash router)
+│   │   ├── api/index.js              # Every backend call (JWT, error messages)
+│   │   ├── state/                    # Session (per tab), consent, display prefs
+│   │   ├── lib/                      # Pre-upload validation, signed QR credentials, CSV, i18n
+│   │   ├── components/               # GIGW strip, masthead, top menu, certificate, charts
+│   │   └── pages/
+│   │       ├── Home.jsx              # Live registry figures + portals
+│   │       ├── Login.jsx             # Institution 3-step / AICTE / Student sign-in
+│   │       ├── InstitutionsExplorer.jsx # Approved institutions, filters, intake drawer
+│   │       ├── InstitutionOverview.jsx  # Course intake register, profile, reports
+│   │       ├── InstitutionStudents.jsx  # Own roster, add / remove, certificate
+│   │       ├── InstitutionUpload.jsx    # Browser pre-check, bulk upload, server verdict
+│   │       ├── AicteDashboard.jsx    # National analytics & validation findings
+│   │       ├── AicteFlagged.jsx      # Review / approve / remove flagged records
+│   │       ├── AicteAudit.jsx        # Audit trail
+│   │       ├── StudentProfile.jsx    # Student record, signed QR, consent
+│   │       └── Verifier.jsx          # APAAR lookup + QR credential check
 │   └── package.json
 ├── aicte_scraper.py                  # Scraper that extracted the 13,085 master colleges
 ├── AICTE_Approved_Colleges_Master.xlsx # Master national dataset
@@ -174,10 +175,11 @@ uvicorn backend.app.main:app --host 127.0.0.1 --port 8000
 #### 2. Frontend (Vite Dev Server on Port 5173)
 ```bash
 cd frontend
-npm install --legacy-peer-deps
-npm run dev -- --port 5173
+npm install
+npm run dev
 ```
-- Development Portal: [http://127.0.0.1:5173](http://127.0.0.1:5173)
+- Development Portal: [http://127.0.0.1:5173](http://127.0.0.1:5173) (Vite forwards `/api` to port 8000)
+- Single-server option: run `npm run build` once; the backend then serves the frontend at [http://127.0.0.1:8000](http://127.0.0.1:8000)
 
 ---
 
@@ -185,6 +187,9 @@ npm run dev -- --port 5173
 
 | Role | Username / Selection | Password | OTP |
 |---|---|---|---|
-| **Institute Admin** | Search for *"St. Xavier's"* or *"Government College"* | `aicte@123` | Click **"1-Click Auto-Fill Code"** or enter `123456` |
-| **AICTE Regulator** | Click *"AICTE Regulator Mode"* in top blue header bar | *Direct access* | Pre-authenticated |
-| **Public Verifier** | Navigate to *"APAAR Verification Portal"* | None required | Test APAAR `778899001122` or `889911223344` |
+| **Institute Admin** | *Sign in → Institution*, search e.g. *"MEHR CHAND"* or *"POST GRADUATE GOVT COLLEGE FOR GIRLS"* | `aicte@123` | Click **Fill code** or enter `123456` |
+| **AICTE Regulator** | *Sign in → AICTE* | *One click* | Pre-authenticated |
+| **Student** | *Sign in → Student*, APAAR `778899001122` | None | `123456` |
+| **Public Verifier** | *Verify a student* (no sign-in) | None | Test APAAR `778899001122` or `889911223344` |
+
+**Demo flow:** sign in as one college → *Upload* → *Load demo file* → upload (clean). In a second tab sign in as another college and upload its demo file: the shared applicants are flagged *enrolled at another institution*, without naming the other college. Then sign in as AICTE → *Flagged records* to see both sides and approve or remove. Sign-in is per tab, so all three can stay open.
