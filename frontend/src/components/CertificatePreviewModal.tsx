@@ -2,6 +2,7 @@ import React from "react";
 import { Student } from "../types";
 import { QRCodeSVG } from "qrcode.react";
 import { X, Printer, ShieldCheck, Award } from "lucide-react";
+import { API_BASE } from "../api";
 
 interface CertificatePreviewModalProps {
   student: Student | null;
@@ -23,8 +24,8 @@ export const CertificatePreviewModal: React.FC<CertificatePreviewModalProps> = (
     ? student.apaar_id.replace(/(\d{4})(\d{4})(\d{4})/, "$1 $2 $3")
     : "NOT SEEDED";
 
-  // Verification URL to encode in QR code
-  const verificationUrl = `${window.location.origin}/api/v1/verify/${student.apaar_id || student.enrollment_no}`;
+  // Verification URL to encode in QR code pointing to API endpoint
+  const verificationUrl = `${API_BASE}/verify/${student.apaar_id || student.enrollment_no}`;
 
   return (
     <div className="modal-overlay" onClick={onClose}>

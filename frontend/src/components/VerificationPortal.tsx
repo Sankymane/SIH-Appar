@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { verifyAPAAR, toggleVerification } from "../api";
+import { verifyAPAAR, toggleVerification, API_BASE } from "../api";
 import { QRCodeSVG } from "qrcode.react";
 import {
   Search,
@@ -53,7 +53,7 @@ export const VerificationPortal: React.FC<VerificationPortalProps> = ({
   };
 
   const verificationUrl = record
-    ? `${window.location.origin}/api/v1/verify/${record.apaar_id}`
+    ? `${API_BASE}/verify/${record.apaar_id}`
     : "";
 
   return (

@@ -1,6 +1,8 @@
 import React from "react";
 import { X, FileSpreadsheet, Download, FileText, CheckCircle2 } from "lucide-react";
 
+import { API_BASE } from "../api";
+
 interface ReportsModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -21,7 +23,7 @@ export const ReportsModal: React.FC<ReportsModalProps> = ({
     if (aicteId) q.append("aicte_id", aicteId);
     q.append("format", format);
 
-    const url = `/api/v1/reports/export/${type}?${q.toString()}`;
+    const url = `${API_BASE}/reports/export/${type}?${q.toString()}`;
     window.open(url, "_blank");
   };
 
