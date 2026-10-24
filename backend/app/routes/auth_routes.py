@@ -347,7 +347,7 @@ def regulator_quick_login():
 @router.post("/phone-email-verify", response_model=AuthTokenResponse)
 def phone_email_verify(payload: PhoneEmailVerifyRequest, db: Session = Depends(get_db)):
     """
-    Receives user_json_url from phone.email button widget (client-id: 15695407177920574360).
+    Receives user_json_url from phone.email button widget (client-id: 11374656146720138530).
     Dynamically fetches verified phone number and enforces role authorization and data mapping.
     """
     res = verify_phone_email_json(payload.user_json_url)

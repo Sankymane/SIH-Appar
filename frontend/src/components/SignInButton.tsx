@@ -14,7 +14,7 @@ declare global {
 
 export const SignInButton: React.FC<SignInButtonProps> = ({
   onVerified,
-  clientId = "15695407177920574360",
+  clientId = "11374656146720138530",
   buttonText = "Sign in with Phone",
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);

@@ -72,7 +72,7 @@ def dispatch_sms_gateway(phone_number: str, otp_code: str, entity_name: str = "A
 
 # ---------------------------------------------------------------------------
 # phone.email JSON URL Verification Handler
-# Integrates with the client-id 15695407177920574360 widget
+# Integrates with the client-id 11374656146720138530 widget
 # ---------------------------------------------------------------------------
 def verify_phone_email_json(user_json_url: str) -> Dict[str, Any]:
     """
