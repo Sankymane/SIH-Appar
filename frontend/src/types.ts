@@ -104,6 +104,7 @@ export interface StudentProfile {
   is_verified: boolean;
   verified_by?: string;
   verified_at?: string;
+  mobile_number?: string;
 }
 
 export interface StudentRemark {

@@ -1,8 +1,9 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useRef } from "react";
 
 interface SignInButtonProps {
   onVerified?: (userJsonUrl: string) => void;
   clientId?: string;
+  buttonText?: string;
 }
 
 declare global {
@@ -14,38 +15,58 @@ declare global {
 export const SignInButton: React.FC<SignInButtonProps> = ({
   onVerified,
   clientId = "15695407177920574360",
+  buttonText = "Sign in with Phone",
 }) => {
+  const containerRef = useRef<HTMLDivElement>(null);
+
   useEffect(() => {
-    // Load the external script provided by phone.email
+    // Register global listener callback as per phone.email specification
+    window.phoneEmailListener = function (userObj: { user_json_url: string }) {
+      if (userObj && userObj.user_json_url && onVerified) {
+        onVerified(userObj.user_json_url);
+      }
+    };
+
+    // Load external phone.email script
     const script = document.createElement("script");
     script.src = "https://www.phone.email/sign_in_button_v1.js";
     script.async = true;
 
-    const container = document.querySelector(".pe_signin_button");
-    if (container) {
-      container.appendChild(script);
+    if (containerRef.current) {
+      containerRef.current.appendChild(script);
     }
 
-    // Define the listener function as per user instructions
-    window.phoneEmailListener = function (userObj: { user_json_url: string }) {
-      const user_json_url = userObj.user_json_url;
-      if (onVerified) {
-        onVerified(user_json_url);
+    return () => {
+      window.phoneEmailListener = null;
+      if (containerRef.current) {
+        containerRef.current.innerHTML = "";
       }
     };
-
-    return () => {
-      // Cleanup listener on unmount
-      window.phoneEmailListener = null;
-    };
-  }, [onVerified]);
+  }, [onVerified, clientId]);
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", margin: "10px 0" }}>
-      <div className="pe_signin_button" data-client-id={clientId}></div>
-      <div style={{ fontSize: "11px", color: "#64748b", marginTop: "4px" }}>
-        Instant 1-Tap OTP Verification via phone.email
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        justifyContent: "center",
+        width: "100%",
+        margin: "12px 0",
+      }}
+    >
+      {/* Official phone.email widget injection container */}
+      <div
+        ref={containerRef}
+        className="pe_signin_button"
+        data-client-id={clientId}
+        style={{ display: "flex", justifyContent: "center", minHeight: "44px" }}
+      ></div>
+
+      <div style={{ fontSize: "11px", color: "#64748b", marginTop: "6px" }}>
+        Secure 2FA verification powered by <strong>phone.email</strong>
       </div>
     </div>
   );
 };
+export default SignInButton;

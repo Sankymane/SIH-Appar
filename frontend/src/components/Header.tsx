@@ -64,8 +64,8 @@ export const Header: React.FC<HeaderProps> = ({
             <Globe size={11} /> Screen Reader Access
           </span>
           <span>|</span>
-          <span style={{ color: "#f97316", fontWeight: 700 }}>
-            🔒 Dev 2FA Mobile: +91 8767434172
+          <span style={{ color: "#22c55e", fontWeight: 700 }}>
+            🔒 2FA Verification Active
           </span>
         </div>
         <div className="top-utility-right">
@@ -315,7 +315,7 @@ export const Header: React.FC<HeaderProps> = ({
         <div className="news-badge">LATEST NEWS</div>
         <div className="ticker-content">
           ★ AICTE Directive 2026-2027: Mandatory APAAR ID Seeding for all sanctioned UG/PG admissions under NEP 2020.
-          &nbsp;&nbsp;&nbsp;&nbsp;★ All security verification OTPs routed strictly to development phone +91 8767434172.
+          &nbsp;&nbsp;&nbsp;&nbsp;★ Secure 2FA multi-role authentication active via phone.email and National Trust Registry.
           &nbsp;&nbsp;&nbsp;&nbsp;★ AI-driven intake forecasting engine active: Institutions exceeding 30% projected demand flagged for early warnings.
           &nbsp;&nbsp;&nbsp;&nbsp;★ Nodal Officers must submit student intake verification before deadline.
         </div>

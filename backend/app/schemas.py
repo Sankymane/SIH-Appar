@@ -53,7 +53,7 @@ class CollegeDetailSchema(BaseModel):
     nodal_officer_name: Optional[str] = None
     nodal_officer_email: Optional[str] = None
     nodal_officer_mobile: Optional[str] = None
-    registered_phone: Optional[str] = "+91 8767434172"
+    registered_phone: Optional[str] = None
     total_approved_intake: int = 0
     total_enrolled_students: int = 0
     total_supernumerary_enrolled: int = 0
@@ -165,7 +165,7 @@ class StudentRemarkCreate(BaseModel):
     remark_type: str
     description: str
     contact_email: Optional[str] = None
-    contact_mobile: Optional[str] = "8767434172"
+    contact_mobile: Optional[str] = None
 
 class StudentRemarkOut(BaseModel):
     id: int
@@ -178,7 +178,7 @@ class StudentRemarkOut(BaseModel):
     description: str
     status: str
     contact_email: Optional[str] = None
-    contact_mobile: Optional[str] = "8767434172"
+    contact_mobile: Optional[str] = None
     admin_notes: Optional[str] = None
     created_at: datetime
     resolved_at: Optional[datetime] = None
@@ -221,7 +221,7 @@ class LoginStep3OTP(BaseModel):
 class PhoneEmailVerifyRequest(BaseModel):
     user_json_url: str
     role: str = "STUDENT"  # STUDENT, INSTITUTE_ADMIN, AICTE_VERIFIER
-    identifier: str  # apaar_id or aicte_id or officer_id
+    identifier: Optional[str] = None  # Optional identifier if supplied by frontend
 
 class AuthTokenResponse(BaseModel):
     access_token: str
@@ -265,7 +265,7 @@ class StakeholderDirectoryItem(BaseModel):
     institution_type: str
     nodal_officer_name: str
     nodal_officer_email: str
-    registered_phone: str = "+91 8767434172"
+    registered_phone: Optional[str] = None
     is_active: bool = True
     total_approved_intake: int = 0
     total_enrolled: int = 0

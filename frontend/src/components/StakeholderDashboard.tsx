@@ -139,7 +139,7 @@ export const StakeholderDashboard: React.FC<StakeholderDashboardProps> = ({ auth
   // Trigger Secondary OTP for Remove College
   const handleInitiateRemoveCollege = async (college: StakeholderDirectoryItem) => {
     const confirmChoice = window.confirm(
-      `Are you sure you want to revoke approval and deactivate "${college.name}" (${college.aicte_id})?\n\nA secondary 2FA OTP will be dispatched to +91 8767434172 to confirm this regulatory action.`
+      `Are you sure you want to revoke approval and deactivate "${college.name}" (${college.aicte_id})?\n\nA secondary 2FA OTP will be dispatched to your authorized administrator mobile to confirm this regulatory action.`
     );
     if (!confirmChoice) return;
 
@@ -237,17 +237,17 @@ export const StakeholderDashboard: React.FC<StakeholderDashboardProps> = ({ auth
             National Stakeholder Compliance & Oversight Portal
           </h1>
           <p style={{ fontSize: "13px", opacity: 0.85, maxWidth: "750px", lineHeight: 1.4, margin: 0 }}>
-            Real-time inspection of institutional compliance, transparent OTP phone registry (+91 8767434172), 
+            Real-time inspection of institutional compliance, transparent OTP phone registry, 
             tamper-evident 2FA administrative college management, and AI-driven intake forecasting models.
           </p>
         </div>
 
         <div style={{ background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.2)", padding: "12px 18px", borderRadius: "8px", textAlign: "right" }}>
-          <div style={{ fontSize: "11px", opacity: 0.8 }}>Authorized Verification Mobile</div>
-          <div style={{ fontSize: "16px", fontWeight: 900, color: "#f97316", letterSpacing: "0.5px" }}>
-            +91 8767434172
+          <div style={{ fontSize: "11px", opacity: 0.8 }}>Administrator Status</div>
+          <div style={{ fontSize: "16px", fontWeight: 900, color: "#22c55e", letterSpacing: "0.5px" }}>
+            2FA Active
           </div>
-          <div style={{ fontSize: "10px", opacity: 0.7 }}>2FA Enforced for Admin Operations</div>
+          <div style={{ fontSize: "10px", opacity: 0.7 }}>Multi-Role Security Enforced</div>
         </div>
       </div>
 
@@ -362,7 +362,7 @@ export const StakeholderDashboard: React.FC<StakeholderDashboardProps> = ({ auth
           }}
         >
           <PhoneCall size={16} />
-          Registered Phone Directory (+91 8767434172)
+          Registered Phone Directory
         </button>
 
         <button
@@ -554,7 +554,7 @@ export const StakeholderDashboard: React.FC<StakeholderDashboardProps> = ({ auth
         </div>
       )}
 
-      {/* TAB 2: REGISTERED PHONE DIRECTORY (+91 8767434172) */}
+      {/* TAB 2: REGISTERED PHONE DIRECTORY */}
       {activeTab === "directory" && (
         <div style={{ background: "#ffffff", border: "1px solid #e2e8f0", borderRadius: "10px", padding: "20px" }}>
           
@@ -564,7 +564,7 @@ export const StakeholderDashboard: React.FC<StakeholderDashboardProps> = ({ auth
                 AICTE Approved Institutions & 2FA Phone Registry
               </h2>
               <p style={{ fontSize: "13px", color: "#64748b", margin: 0 }}>
-                Transparent mapping of registered nodal phones receiving system OTPs (Development enforced: +91 8767434172).
+                Transparent mapping of registered nodal phones receiving system 2FA authorization codes.
               </p>
             </div>
 
@@ -619,7 +619,7 @@ export const StakeholderDashboard: React.FC<StakeholderDashboardProps> = ({ auth
                     <td style={{ padding: "10px 12px" }}>{c.institution_type}</td>
                     <td style={{ padding: "10px 12px" }}>
                       <span style={{ background: "#eff6ff", color: "#1d4ed8", padding: "3px 8px", borderRadius: "4px", fontWeight: 700 }}>
-                        +91 8767434172
+                        {c.registered_phone ? `+91 •••••${c.registered_phone.slice(-4)}` : "Verified via 2FA"}
                       </span>
                     </td>
                     <td style={{ padding: "10px 12px" }}>
@@ -686,7 +686,7 @@ export const StakeholderDashboard: React.FC<StakeholderDashboardProps> = ({ auth
             </div>
             
             <p style={{ fontSize: "12px", color: "#64748b", marginBottom: "18px" }}>
-              Adding an institution to the National Registry requires secondary 2FA verification. An OTP will be dispatched to <strong>+91 8767434172</strong>.
+              Adding an institution to the National Registry requires secondary 2FA verification. An authorization code will be dispatched to your registered administrator mobile.
             </p>
 
             <form onSubmit={handleInitiateAddCollege}>
@@ -767,7 +767,7 @@ export const StakeholderDashboard: React.FC<StakeholderDashboardProps> = ({ auth
               </div>
 
               <div style={{ background: "#f8fafc", padding: "10px 12px", borderRadius: "6px", border: "1px dashed #cbd5e1", fontSize: "11px", color: "#64748b", marginBottom: "16px" }}>
-                🔒 <strong>High Security Action:</strong> Clicking proceed will trigger an authorization OTP to <strong>+91 8767434172</strong>.
+                🔒 <strong>High Security Action:</strong> Clicking proceed will trigger an authorization code to your registered mobile.
               </div>
 
               <button
@@ -1142,7 +1142,7 @@ export const StakeholderDashboard: React.FC<StakeholderDashboardProps> = ({ auth
                 textAlign: "center"
               }}
             >
-              🔒 A secondary verification OTP has been routed strictly to authorized mobile: <strong>+91 8767434172</strong>.
+              🔒 A secondary verification OTP has been routed to your authorized administrator mobile.
             </div>
 
             {otpActionError && (

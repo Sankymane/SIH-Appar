@@ -510,6 +510,7 @@ def seed_database(max_colleges: int = 150):
             date_of_birth="2004-06-18",
             date_of_admission="2026-08-01",
             academic_year="2026-2027",
+            mobile_number="8767434172",
             credits_earned=84,
             cgpa=8.92,
             aicte_id=primary_c.aicte_id,

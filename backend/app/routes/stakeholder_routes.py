@@ -38,7 +38,7 @@ def get_stakeholder_directory(
 ):
     """
     Shows a transparent mapping of which phone numbers are registered to receive OTPs
-    for which colleges (+91 8767434172), nodal officers, and approval statuses.
+    for nodal officers, colleges, and approval statuses.
     """
     q = db.query(College)
 
@@ -212,7 +212,6 @@ def request_action_otp(payload: SecondaryOTPRequest):
     return {
         "status": "SECONDARY_OTP_SENT",
         "action": payload.action,
-        "phone": GLOBAL_DEV_PHONE_NUMBER,
         "masked_phone": GLOBAL_DEV_PHONE_MASKED,
         "session_token": otp_data["session_token"],
         "simulated_otp": otp_data["otp"],  # Expose for 1-click test

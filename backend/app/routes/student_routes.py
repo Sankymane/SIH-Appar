@@ -86,7 +86,8 @@ def get_student_profile(
         "verification_hash": student.verification_hash,
         "is_verified": student.is_verified,
         "verified_by": student.verified_by,
-        "verified_at": student.verified_at.isoformat() if student.verified_at else None
+        "verified_at": student.verified_at.isoformat() if student.verified_at else None,
+        "mobile_number": student.mobile_number
     }
 
 
@@ -119,7 +120,7 @@ def raise_student_remark(
         remark_type=payload.remark_type,
         description=payload.description,
         contact_email=payload.contact_email or "student@abc.gov.in",
-        contact_mobile=payload.contact_mobile or "8767434172",
+        contact_mobile=payload.contact_mobile or (student.mobile_number if (student and student.mobile_number) else ""),
         status="PENDING"
     )
     db.add(new_remark)

@@ -161,7 +161,7 @@ export default function App() {
                   <span style={{ background: "#2e7d32", color: "#fff", padding: "2px 6px", borderRadius: "3px", fontWeight: 700, fontSize: "10px" }}>POST</span>
                   <b style={{ marginLeft: "6px" }}>/api/v1/auth/student-request-otp</b>
                   <div style={{ fontSize: "11px", color: "#64748b", marginTop: "4px" }}>
-                    Student APAAR lookup & security OTP dispatch to registered phone (+91 8767434172).
+                    Student APAAR lookup & security OTP dispatch to registered phone.
                   </div>
                 </div>
 
@@ -275,7 +275,7 @@ export default function App() {
             <div style={{ fontSize: "11px", opacity: 0.8 }}>Nelson Mandela Marg, Vasant Kunj, New Delhi - 110070</div>
           </div>
           <div style={{ fontSize: "11px", opacity: 0.7, textAlign: "right" }}>
-            Smart India Hackathon (SIH) • Problem Statement 26263 • All OTPs Routed to +91 8767434172
+            Smart India Hackathon (SIH) • Problem Statement 26263 • AICTE APAAR Platform
           </div>
         </div>
       </footer>

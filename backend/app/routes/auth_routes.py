@@ -19,6 +19,9 @@ from ..auth import (
     verify_otp_session,
     create_access_token,
     verify_phone_email_json,
+    normalize_phone_number,
+    extract_last_10_digits,
+    AUTHORIZED_ADMIN_PHONES,
     GLOBAL_DEV_PHONE_NUMBER,
     GLOBAL_DEV_PHONE_MASKED
 )
@@ -76,7 +79,6 @@ def institute_request_otp(payload: InstituteLoginRequest, db: Session = Depends(
     return {
         "status": "OTP_SENT",
         "message": f"Verification code dispatched to authorized nodal phone ({GLOBAL_DEV_PHONE_MASKED})",
-        "phone": GLOBAL_DEV_PHONE_NUMBER,
         "masked_phone": GLOBAL_DEV_PHONE_MASKED,
         "session_token": otp_data["session_token"],
         "simulated_otp": otp_data["otp"],  # Provided in response for seamless evaluation
@@ -157,49 +159,46 @@ def step3_verify_otp(payload: LoginStep3OTP, db: Session = Depends(get_db)):
 
 
 # ---------------------------------------------------------------------------
-# 2. Student Login Flow (APAAR ID -> OTP to 8767434172 -> Student Dashboard)
+# 2. Student Login Flow (APAAR ID / Phone -> OTP -> Student Dashboard)
 # ---------------------------------------------------------------------------
 @router.post("/student-request-otp")
 def student_request_otp(payload: StudentLoginRequest, db: Session = Depends(get_db)):
     """
-    Student enters their 12-digit APAAR ID.
-    System verifies identity and dispatches OTP strictly to 8767434172.
+    Student enters their 12-digit APAAR ID or registered phone number.
+    System verifies identity and dispatches OTP.
     """
-    clean_apaar = payload.apaar_id.strip().replace(" ", "").replace("-", "")
+    clean_identifier = payload.apaar_id.strip().replace(" ", "").replace("-", "")
 
-    # Look up student in database
-    student = db.query(Student).filter(Student.apaar_id == clean_apaar).first()
-    
-    # If not in DB, allow test with Sankalp Mane's APAAR or valid 12-digit mock
+    # Look up student in database by APAAR ID or registered mobile
+    student = db.query(Student).filter(
+        (Student.apaar_id == clean_identifier) |
+        (Student.mobile_number == clean_identifier) |
+        (Student.mobile_number == normalize_phone_number(clean_identifier))
+    ).first()
+
+    # If not found and input matches Sankalp Mane APAAR 126430259751 or phone 8767434172
+    if not student and clean_identifier in ["126430259751", "8767434172"]:
+        student = db.query(Student).filter(Student.apaar_id == "126430259751").first()
+
     if not student:
-        # Check if 12 digits
-        if len(clean_apaar) != 12 or not clean_apaar.isdigit():
-            raise HTTPException(status_code=400, detail="Invalid APAAR ID format. Must be a 12-digit numerical identifier.")
-        # Check if Sankalp Mane card
-        if clean_apaar == "126430259751":
-            student_name = "SANKALP HEMANT MANE"
-            college_name = "ST. XAVIER'S COLLEGE"
-            aicte_id = "1-44525213207"
-        else:
-            student_name = "Student Candidate"
-            college_name = "AICTE Enrolled Institution"
-            aicte_id = "1-44525213207"
-    else:
-        student_name = student.full_name
-        college = db.query(College).filter(College.aicte_id == student.aicte_id).first()
-        college_name = college.name if college else "Enrolled College"
-        aicte_id = student.aicte_id
+        raise HTTPException(status_code=404, detail="No profile found")
 
-    otp_data = generate_otp_session(target_id=clean_apaar, role="STUDENT")
+    student_phone = student.mobile_number or "8767434172"
+    masked_phone = f"+91 {student_phone[:3]}****{student_phone[-2:]}" if len(student_phone) >= 5 else "+91 ••••••••••"
+
+    student_name = student.full_name
+    college = db.query(College).filter(College.aicte_id == student.aicte_id).first()
+    college_name = college.name if college else "ST. XAVIER'S COLLEGE"
+    aicte_id = student.aicte_id
+
+    otp_data = generate_otp_session(target_id=student.apaar_id, role="STUDENT")
 
     return {
         "status": "OTP_SENT",
-        "message": f"Verification code sent to registered DigiLocker phone ({GLOBAL_DEV_PHONE_MASKED})",
-        "phone": GLOBAL_DEV_PHONE_NUMBER,
-        "masked_phone": GLOBAL_DEV_PHONE_MASKED,
+        "message": f"Verification code sent to registered mobile ({masked_phone})",
         "session_token": otp_data["session_token"],
         "simulated_otp": otp_data["otp"],
-        "apaar_id": clean_apaar,
+        "apaar_id": student.apaar_id,
         "student_name": student_name,
         "college_name": college_name,
         "aicte_id": aicte_id
@@ -275,7 +274,6 @@ def regulator_request_otp(payload: RegulatorLoginRequest = None):
     return {
         "status": "OTP_SENT",
         "message": f"Security verification code dispatched to authorized mobile ({GLOBAL_DEV_PHONE_MASKED})",
-        "phone": GLOBAL_DEV_PHONE_NUMBER,
         "masked_phone": GLOBAL_DEV_PHONE_MASKED,
         "session_token": otp_data["session_token"],
         "simulated_otp": otp_data["otp"],
@@ -350,64 +348,166 @@ def regulator_quick_login():
 def phone_email_verify(payload: PhoneEmailVerifyRequest, db: Session = Depends(get_db)):
     """
     Receives user_json_url from phone.email button widget (client-id: 15695407177920574360).
-    Fetches verified phone number and establishes authenticated session.
+    Dynamically fetches verified phone number and enforces role authorization and data mapping.
     """
     res = verify_phone_email_json(payload.user_json_url)
+    if not res.get("success"):
+        raise HTTPException(
+            status_code=400,
+            detail=res.get("error", "Failed to retrieve verified phone details from phone.email.")
+        )
 
+    raw_phone = str(res.get("user_phone_number") or "")
+    country_code = str(res.get("user_country_code") or "")
+    data_dict = res.get("data") if isinstance(res.get("data"), dict) else {}
+
+    raw_candidates = [
+        raw_phone,
+        data_dict.get("user_phone_number", ""),
+        data_dict.get("user_phone_no", ""),
+        data_dict.get("phone_number", ""),
+        f"{country_code}{raw_phone}"
+    ]
+
+    clean_phone = ""
+    for candidate in raw_candidates:
+        extracted = extract_last_10_digits(str(candidate))
+        if len(extracted) == 10:
+            clean_phone = extracted
+            break
+
+    if not clean_phone or len(clean_phone) != 10:
+        raise HTTPException(
+            status_code=400,
+            detail="No valid 10-digit phone number retrieved from verification response."
+        )
+
+    # 1. Student Login: Query database using verified phone number (flexible last 10 digits check)
     if payload.role == "STUDENT":
-        clean_apaar = payload.identifier.strip().replace(" ", "").replace("-", "")
-        student = db.query(Student).filter(Student.apaar_id == clean_apaar).first()
-        student_name = student.full_name if student else "SANKALP HEMANT MANE"
-        aicte_id = student.aicte_id if student else "1-44525213207"
-        college = db.query(College).filter(College.aicte_id == aicte_id).first()
+        # Search student by verified phone number in database
+        student = db.query(Student).filter(
+            (Student.mobile_number == clean_phone) |
+            (Student.mobile_number.like(f"%{clean_phone}")) |
+            (Student.mobile_number == f"+91{clean_phone}") |
+            (Student.mobile_number == f"+91 {clean_phone}")
+        ).first()
+
+        # If verified number last 10 digits equal 8767434172, ensure Sankalp Hemant Mane record is matched
+        if not student and clean_phone == "8767434172":
+            student = db.query(Student).filter(Student.apaar_id == "126430259751").first()
+            if student:
+                student.mobile_number = "8767434172"
+                db.commit()
+
+        # If unlinked number logs in, show "No profile found" error
+        if not student:
+            raise HTTPException(
+                status_code=404,
+                detail="No profile found"
+            )
+
+        college = db.query(College).filter(College.aicte_id == student.aicte_id).first()
         college_name = college.name if college else "ST. XAVIER'S COLLEGE"
 
         token = create_access_token({
-            "sub": aicte_id,
+            "sub": student.aicte_id,
             "name": college_name,
             "role": "STUDENT",
-            "apaar_id": clean_apaar,
-            "student_name": student_name
+            "apaar_id": student.apaar_id,
+            "student_name": student.full_name,
+            "phone": clean_phone
         })
+
+        audit = AuditLog(
+            action="STUDENT_PORTAL_LOGIN",
+            entity_type="Student",
+            entity_id=student.apaar_id,
+            actor_id=student.apaar_id,
+            actor_name=student.full_name,
+            actor_role="STUDENT",
+            details=f"Student accessed profile with verified phone {clean_phone} via phone.email."
+        )
+        db.add(audit)
+        db.commit()
+
         return AuthTokenResponse(
             access_token=token,
             token_type="bearer",
-            aicte_id=aicte_id,
+            aicte_id=student.aicte_id,
             college_name=college_name,
             role="STUDENT",
-            apaar_id=clean_apaar,
-            student_name=student_name
+            apaar_id=student.apaar_id,
+            student_name=student.full_name
         )
 
-    elif payload.role == "AICTE_VERIFIER":
-        token = create_access_token({
-            "sub": "AICTE_HQ_NEW_DELHI",
-            "name": "AICTE Central Regulatory Bureau",
-            "role": "AICTE_VERIFIER"
-        })
-        return AuthTokenResponse(
-            access_token=token,
-            token_type="bearer",
-            aicte_id="AICTE-CENTRAL",
-            college_name="AICTE Central Regulatory Bureau",
-            role="AICTE_VERIFIER"
-        )
+    # 2. Institute & Stakeholder Logins (Access Control)
+    # Strictly validate if the last 10 digits of the received phone number equal "8767434172"
+    elif payload.role in ["INSTITUTE_ADMIN", "AICTE_VERIFIER"]:
+        if clean_phone != "8767434172":
+            raise HTTPException(
+                status_code=403,
+                detail="Unauthorized: Insufficient Permissions"
+            )
+
+        if payload.role == "AICTE_VERIFIER":
+            token = create_access_token({
+                "sub": "AICTE_HQ_NEW_DELHI",
+                "name": "AICTE Central Regulatory Bureau",
+                "role": "AICTE_VERIFIER",
+                "phone": clean_phone
+            })
+            audit = AuditLog(
+                action="STAKEHOLDER_LOGIN_SUCCESS",
+                entity_type="Stakeholder",
+                entity_id="AICTE_HQ_NEW_DELHI",
+                actor_id="AICTE_REGULATOR",
+                actor_name="AICTE Central Regulatory Bureau",
+                actor_role="AICTE_VERIFIER",
+                details=f"Authorized regulatory access granted via phone.email ({clean_phone})."
+            )
+            db.add(audit)
+            db.commit()
+
+            return AuthTokenResponse(
+                access_token=token,
+                token_type="bearer",
+                aicte_id="AICTE-CENTRAL",
+                college_name="AICTE Central Regulatory Bureau",
+                role="AICTE_VERIFIER"
+            )
+
+        else:  # INSTITUTE_ADMIN
+            college = None
+            if payload.identifier:
+                college = db.query(College).filter(College.aicte_id == payload.identifier).first()
+            if not college:
+                college = db.query(College).first()
+
+            token = create_access_token({
+                "sub": college.aicte_id,
+                "name": college.name,
+                "role": "INSTITUTE_ADMIN",
+                "phone": clean_phone
+            })
+            audit = AuditLog(
+                action="INSTITUTE_LOGIN_SUCCESS",
+                entity_type="College",
+                entity_id=college.aicte_id,
+                actor_id=college.aicte_id,
+                actor_name=college.name,
+                actor_role="INSTITUTE_ADMIN",
+                details=f"Institutional login authorized for verified phone {clean_phone} via phone.email."
+            )
+            db.add(audit)
+            db.commit()
+
+            return AuthTokenResponse(
+                access_token=token,
+                token_type="bearer",
+                aicte_id=college.aicte_id,
+                college_name=college.name,
+                role="INSTITUTE_ADMIN"
+            )
 
     else:
-        # Default INSTITUTE_ADMIN
-        college = db.query(College).filter(College.aicte_id == payload.identifier).first()
-        if not college:
-            college = db.query(College).first()
-        
-        token = create_access_token({
-            "sub": college.aicte_id,
-            "name": college.name,
-            "role": "INSTITUTE_ADMIN"
-        })
-        return AuthTokenResponse(
-            access_token=token,
-            token_type="bearer",
-            aicte_id=college.aicte_id,
-            college_name=college.name,
-            role="INSTITUTE_ADMIN"
-        )
+        raise HTTPException(status_code=400, detail="Invalid login role requested.")

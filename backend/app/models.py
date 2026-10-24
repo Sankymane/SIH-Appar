@@ -70,6 +70,7 @@ class Student(Base):
     date_of_birth = Column(String(20), nullable=True)
     date_of_admission = Column(String(20), nullable=True)
     academic_year = Column(String(20), default="2026-2027")
+    mobile_number = Column(String(20), index=True, nullable=True)
 
     # Academic Bank of Credits (ABC) info
     credits_earned = Column(Integer, default=84)

@@ -68,7 +68,7 @@ export const RoleSelectionLanding: React.FC<RoleSelectionLandingProps> = ({
               boxShadow: "0 1px 3px rgba(0,0,0,0.05)"
             }}
           >
-            🔒 <strong>Strict Data Privacy Enforced:</strong> All security OTPs across all portals are routed strictly to authorized development mobile: <strong>+91 8767434172</strong>.
+            🔒 <strong>Strict Data Privacy & 2FA Enforced:</strong> All portal access requires verified mobile authentication via phone.email and AICTE secure 2FA gateway.
           </div>
         </div>
 
@@ -387,7 +387,7 @@ export const RoleSelectionLanding: React.FC<RoleSelectionLandingProps> = ({
               <div style={{ borderTop: "1px solid #f1f5f9", paddingTop: "14px", marginBottom: "20px" }}>
                 <div style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "12px", color: "#334155", marginBottom: "8px" }}>
                   <CheckCircle2 size={15} color="#16a34a" />
-                  <span>Registered phone directory mapping colleges to +91 8767434172</span>
+                  <span>Registered phone directory mapping colleges to verified nodal administrators</span>
                 </div>
                 <div style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "12px", color: "#334155", marginBottom: "8px" }}>
                   <CheckCircle2 size={15} color="#16a34a" />

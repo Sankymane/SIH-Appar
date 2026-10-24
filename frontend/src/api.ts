@@ -67,7 +67,7 @@ export async function instituteRequestOtp(aicte_id: string) {
   });
   if (!res.ok) {
     const err = await res.json();
-    throw new Error(err.detail || "Failed to trigger OTP to 8767434172");
+    throw new Error(err.detail || "Failed to trigger OTP to registered mobile");
   }
   return res.json();
 }
@@ -196,7 +196,7 @@ export async function regulatorLogin() {
   return res.json();
 }
 
-export async function verifyPhoneEmail(user_json_url: string, role: string, identifier: string) {
+export async function verifyPhoneEmail(user_json_url: string, role: string, identifier?: string) {
   const res = await fetch(`${API_BASE}/auth/phone-email-verify`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },

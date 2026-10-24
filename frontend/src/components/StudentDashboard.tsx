@@ -66,7 +66,7 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ auth }) => {
         remark_type: remarkType,
         description: remarkDesc.trim(),
         contact_email: contactEmail,
-        contact_mobile: "8767434172",
+        contact_mobile: profile?.mobile_number || "",
       });
       setRemarkSuccessMsg("Grievance remark successfully submitted to AICTE National Registry Desk.");
       setRemarkDesc("");
@@ -581,7 +581,7 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ auth }) => {
                   <input
                     type="text"
                     disabled
-                    value="+91 8767434172"
+                    value={profile?.mobile_number ? `+91 ${profile.mobile_number}` : "Verified Mobile (2FA)"}
                     style={{
                       width: "100%",
                       padding: "8px",
