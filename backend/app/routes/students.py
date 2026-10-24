@@ -115,17 +115,31 @@ def create_student(
     to check APAAR format, duplicates (within & across institutions),
     intake caps, and data consistency.
     """
-    aicte_id = user_context.get("aicte_id", "1-44525213207")
+    aicte_id = user_context.get("aicte_id")
+    if not aicte_id or aicte_id in ["1-44525213207", "AICTE-CENTRAL"]:
+        primary_col = db.query(College).first()
+        aicte_id = primary_col.aicte_id if primary_col else "1-44465113304"
 
-    # If course_id not specified, find matching course by department
-    course_id = payload.course_id
-    if not course_id:
+    # Find matching course belonging strictly to this institution
+    course = None
+    if payload.course_id:
+        course = db.query(CourseIntake).filter(
+            CourseIntake.id == payload.course_id,
+            CourseIntake.aicte_id == aicte_id
+        ).first()
+
+    if not course:
         course = db.query(CourseIntake).filter(
             CourseIntake.aicte_id == aicte_id,
             CourseIntake.department == payload.department
         ).first()
-        if course:
-            course_id = course.id
+
+    if not course:
+        course = db.query(CourseIntake).filter(
+            CourseIntake.aicte_id == aicte_id
+        ).first()
+
+    course_id = course.id if course else payload.course_id
 
     student_data = payload.dict()
     student_data["course_id"] = course_id
@@ -224,7 +238,10 @@ async def bulk_upload_students(
     Validates APAAR ID, Approved Intake, Supernumerary Seats, NRI, OCI, and FN status.
     Automatically flags discrepancies.
     """
-    aicte_id = user_context.get("aicte_id", "1-44525213207")
+    aicte_id = user_context.get("aicte_id")
+    if not aicte_id or aicte_id in ["1-44525213207", "AICTE-CENTRAL"]:
+        primary_col = db.query(College).first()
+        aicte_id = primary_col.aicte_id if primary_col else "1-44465113304"
     filename = file.filename.lower()
 
     contents = await file.read()

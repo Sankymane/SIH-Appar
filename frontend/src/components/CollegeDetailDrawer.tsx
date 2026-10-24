@@ -85,11 +85,11 @@ export const CollegeDetailDrawer: React.FC<CollegeDetailDrawerProps> = ({
                 <div style={{ fontSize: "13px", fontWeight: 700, color: "#0B2265", marginBottom: "10px" }}>
                   Institutional Contact & Overview
                 </div>
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px", fontSize: "12px" }}>
-                  <div>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "12px", fontSize: "12px" }}>
+                  <div style={{ wordBreak: "break-word" }}>
                     <span style={{ color: "#64748b" }}>Type:</span> <b>{detail.institution_type}</b>
                   </div>
-                  <div>
+                  <div style={{ wordBreak: "break-word" }}>
                     <span style={{ color: "#64748b" }}>District:</span> <b>{detail.district}, {detail.state}</b>
                   </div>
                   <div>
@@ -100,28 +100,28 @@ export const CollegeDetailDrawer: React.FC<CollegeDetailDrawerProps> = ({
                   </div>
                 </div>
 
-                <div style={{ marginTop: "12px", borderTop: "1px solid #e2e8f0", paddingTop: "10px", fontSize: "12px" }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "6px" }}>
-                    <Globe size={13} color="#0B2265" />
+                <div style={{ marginTop: "12px", borderTop: "1px solid #e2e8f0", paddingTop: "10px", fontSize: "12px", display: "flex", flexDirection: "column", gap: "8px" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: "6px", wordBreak: "break-all" }}>
+                    <Globe size={13} color="#0B2265" style={{ flexShrink: 0 }} />
                     <a
                       href={detail.website}
                       target="_blank"
                       rel="noreferrer"
-                      style={{ color: "#009688", textDecoration: "none", fontWeight: 600 }}
+                      style={{ color: "#009688", textDecoration: "none", fontWeight: 600, wordBreak: "break-all" }}
                     >
                       {detail.website} <ExternalLink size={10} style={{ display: "inline" }} />
                     </a>
                   </div>
-                  <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "6px" }}>
-                    <Mail size={13} color="#0B2265" />
+                  <div style={{ display: "flex", alignItems: "center", gap: "6px", wordBreak: "break-all" }}>
+                    <Mail size={13} color="#0B2265" style={{ flexShrink: 0 }} />
                     <span>{detail.contact_email || "registrar@institution.edu.in"}</span>
                   </div>
-                  <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "6px" }}>
-                    <Phone size={13} color="#0B2265" />
+                  <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                    <Phone size={13} color="#0B2265" style={{ flexShrink: 0 }} />
                     <span>{detail.contact_phone || "+91 98765 43210"}</span>
                   </div>
-                  <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                    <User size={13} color="#0B2265" />
+                  <div style={{ display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap", wordBreak: "break-word" }}>
+                    <User size={13} color="#0B2265" style={{ flexShrink: 0 }} />
                     <span>Nodal Officer: <b>{detail.nodal_officer_name}</b> ({detail.nodal_officer_mobile})</span>
                   </div>
                 </div>
@@ -199,9 +199,9 @@ export const CollegeDetailDrawer: React.FC<CollegeDetailDrawerProps> = ({
 
                     return (
                       <div key={crs.id} style={{ borderBottom: "1px solid #f1f5f9", paddingBottom: "8px" }}>
-                        <div style={{ display: "flex", justifyContent: "space-between", fontSize: "12px", marginBottom: "3px" }}>
-                          <span style={{ fontWeight: 600, color: "#1e293b" }}>{crs.department}</span>
-                          <span style={{ color: isExceeded ? "#dc2626" : "#475569", fontWeight: 700 }}>
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "6px", fontSize: "12px", marginBottom: "3px" }}>
+                          <span style={{ fontWeight: 600, color: "#1e293b", wordBreak: "break-word", flex: "1 1 200px" }}>{crs.department}</span>
+                          <span style={{ color: isExceeded ? "#dc2626" : "#475569", fontWeight: 700, whiteSpace: "nowrap" }}>
                             {admitted} / {crs.approved_intake} ({pct}%)
                           </span>
                         </div>

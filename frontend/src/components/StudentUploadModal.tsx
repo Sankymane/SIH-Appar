@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { createStudent, bulkUploadStudents } from "../api";
 import { CourseIntake } from "../types";
 import {
@@ -9,7 +9,8 @@ import {
   Download,
   AlertTriangle,
   CheckCircle2,
-  FileText
+  FileText,
+  Sparkles
 } from "lucide-react";
 
 interface StudentUploadModalProps {
@@ -31,6 +32,7 @@ export const StudentUploadModal: React.FC<StudentUploadModalProps> = ({
 
   // Single Student Form States
   const [apaarId, setApaarId] = useState<string>("");
+  const [simulateMissingApaar, setSimulateMissingApaar] = useState<boolean>(false);
   const [enrollmentNo, setEnrollmentNo] = useState<string>("");
   const [fullName, setFullName] = useState<string>("");
   const [gender, setGender] = useState<string>("Male");
@@ -49,6 +51,21 @@ export const StudentUploadModal: React.FC<StudentUploadModalProps> = ({
   const [loading, setLoading] = useState<boolean>(false);
   const [errorMsg, setErrorMsg] = useState<string>("");
 
+  useEffect(() => {
+    if (courses && courses.length > 0) {
+      if (!selectedCourseId || !courses.some((c) => c.id === Number(selectedCourseId))) {
+        setSelectedCourseId(courses[0].id);
+      }
+    }
+  }, [courses, isOpen]);
+
+  const handleGenerateRandomApaar = () => {
+    const first = Math.floor(2 + Math.random() * 8);
+    const rest = Math.floor(10000000000 + Math.random() * 90000000000);
+    setApaarId(`${first}${String(rest).slice(1)}`);
+    setSimulateMissingApaar(false);
+  };
+
   if (!isOpen) return null;
 
   const handleSingleSubmit = async (e: React.FormEvent) => {
@@ -56,21 +73,29 @@ export const StudentUploadModal: React.FC<StudentUploadModalProps> = ({
     setLoading(true);
     setErrorMsg("");
 
-    const matchedCourse = courses.find((c) => c.id === Number(selectedCourseId));
+    let finalApaar = apaarId.trim();
+    if (!finalApaar && !simulateMissingApaar) {
+      const first = Math.floor(2 + Math.random() * 8);
+      const rest = Math.floor(10000000000 + Math.random() * 90000000000);
+      finalApaar = `${first}${String(rest).slice(1)}`;
+      setApaarId(finalApaar);
+    }
+
+    const matchedCourse = courses.find((c) => c.id === Number(selectedCourseId)) || courses[0];
     const dept = matchedCourse ? matchedCourse.department : "Computer Science and Engineering";
     const prog = matchedCourse ? matchedCourse.program : "Engineering and Technology";
     const lvl = matchedCourse ? matchedCourse.level : "UG";
 
     try {
       await createStudent({
-        apaar_id: apaarId.trim() || null,
-        enrollment_no: enrollmentNo.trim(),
+        apaar_id: finalApaar || null,
+        enrollment_no: enrollmentNo.trim() || `EN26${Math.floor(1000 + Math.random() * 9000)}`,
         full_name: fullName.trim(),
         gender,
         category,
         date_of_birth: dateOfBirth,
         date_of_admission: dateOfAdmission,
-        course_id: Number(selectedCourseId),
+        course_id: matchedCourse ? matchedCourse.id : Number(selectedCourseId),
         department: dept,
         program: prog,
         level: lvl,
@@ -79,6 +104,7 @@ export const StudentUploadModal: React.FC<StudentUploadModalProps> = ({
         is_oci: isOci,
         is_fn: isFn,
         academic_year: "2026-2027",
+        aicte_id: aicteId,
       });
 
       onSuccess();
@@ -220,19 +246,55 @@ export const StudentUploadModal: React.FC<StudentUploadModalProps> = ({
 
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", marginBottom: "12px" }}>
                 <div>
-                  <label style={{ display: "block", fontSize: "11px", fontWeight: 700, color: "#475569", marginBottom: "4px" }}>
-                    APAAR ID (12 Digits) *
-                  </label>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "4px" }}>
+                    <label style={{ fontSize: "11px", fontWeight: 700, color: "#475569" }}>
+                      APAAR ID (12 Digits) *
+                    </label>
+                    <button
+                      type="button"
+                      style={{
+                        background: "#eff6ff",
+                        color: "#1d4ed8",
+                        border: "1px solid #bfdbfe",
+                        padding: "2px 8px",
+                        borderRadius: "4px",
+                        fontSize: "10px",
+                        fontWeight: 700,
+                        cursor: "pointer",
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: "3px"
+                      }}
+                      onClick={handleGenerateRandomApaar}
+                      title="Auto-generate a new 12-digit valid APAAR ID"
+                    >
+                      <Sparkles size={11} /> Auto-Generate
+                    </button>
+                  </div>
                   <input
                     type="text"
                     className="filter-input"
                     placeholder="e.g. 982347102938"
                     maxLength={12}
                     value={apaarId}
-                    onChange={(e) => setApaarId(e.target.value)}
+                    onChange={(e) => {
+                      setApaarId(e.target.value);
+                      if (e.target.value.trim()) setSimulateMissingApaar(false);
+                    }}
                   />
-                  <div style={{ fontSize: "10px", color: "#64748b", marginTop: "2px" }}>
-                    Leave blank to test "Missing APAAR" validation check.
+                  <div style={{ display: "flex", alignItems: "center", gap: "6px", marginTop: "4px" }}>
+                    <input
+                      type="checkbox"
+                      id="sim-missing"
+                      checked={simulateMissingApaar}
+                      onChange={(e) => {
+                        setSimulateMissingApaar(e.target.checked);
+                        if (e.target.checked) setApaarId("");
+                      }}
+                    />
+                    <label htmlFor="sim-missing" style={{ fontSize: "10px", color: "#64748b", cursor: "pointer" }}>
+                      Simulate "Missing APAAR" check
+                    </label>
                   </div>
                 </div>
 

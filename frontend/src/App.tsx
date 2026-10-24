@@ -33,9 +33,26 @@ export default function App() {
 
   // Restore stored session on mount if available
   useEffect(() => {
+    try {
+      const stored = localStorage.getItem("aicte_auth_context");
+      if (stored) {
+        const parsed: UserAuthContext = JSON.parse(stored);
+        if (parsed && (parsed.token || parsed.aicte_id)) {
+          setAuth(parsed);
+          if (parsed.role === "STUDENT") {
+            setCurrentTab("student-dashboard");
+          } else if (parsed.role === "AICTE_VERIFIER") {
+            setCurrentTab("stakeholder-dashboard");
+          } else {
+            setCurrentTab("dashboard");
+          }
+          return;
+        }
+      }
+    } catch {}
+
     const token = localStorage.getItem("aicte_token");
     if (token) {
-      // Decode or check session
       setAuth({
         token,
         aicte_id: "1-44465113304",
@@ -50,6 +67,7 @@ export default function App() {
 
   const handleLogout = () => {
     localStorage.removeItem("aicte_token");
+    localStorage.removeItem("aicte_auth_context");
     setAuth({
       token: "",
       aicte_id: "",
@@ -67,6 +85,10 @@ export default function App() {
 
   const handleLoginSuccess = (authData: UserAuthContext) => {
     setAuth(authData);
+    localStorage.setItem("aicte_auth_context", JSON.stringify(authData));
+    if (authData.token) {
+      localStorage.setItem("aicte_token", authData.token);
+    }
     if (authData.role === "STUDENT") {
       setCurrentTab("student-dashboard");
     } else if (authData.role === "AICTE_VERIFIER") {
