@@ -42,6 +42,7 @@ export interface CollegeDetail {
   nodal_officer_name?: string;
   nodal_officer_email?: string;
   nodal_officer_mobile?: string;
+  registered_phone?: string;
   total_approved_intake: number;
   total_enrolled_students: number;
   total_supernumerary_enrolled: number;
@@ -74,7 +75,112 @@ export interface Student {
   validation_remarks?: string;
   verification_hash?: string;
   is_verified: boolean;
+  credits_earned?: number;
+  cgpa?: number;
   created_at?: string;
+}
+
+export interface StudentProfile {
+  apaar_id: string;
+  full_name: string;
+  enrollment_no: string;
+  gender: string;
+  category: string;
+  date_of_birth?: string;
+  date_of_admission?: string;
+  academic_year: string;
+  aicte_id: string;
+  college_name: string;
+  program: string;
+  department: string;
+  level: string;
+  admission_type: string;
+  credits_earned: number;
+  cgpa: number;
+  digilocker_status: string;
+  card_photo_url?: string;
+  validation_status: string;
+  verification_hash?: string;
+  is_verified: boolean;
+  verified_by?: string;
+  verified_at?: string;
+}
+
+export interface StudentRemark {
+  id: number;
+  student_id?: number;
+  apaar_id: string;
+  student_name: string;
+  aicte_id: string;
+  college_name?: string;
+  remark_type: string;
+  description: string;
+  status: "PENDING" | "UNDER_REVIEW" | "RESOLVED";
+  contact_email?: string;
+  contact_mobile?: string;
+  admin_notes?: string;
+  created_at: string;
+  resolved_at?: string;
+}
+
+export interface StakeholderDirectoryItem {
+  aicte_id: string;
+  name: string;
+  district: string;
+  state: string;
+  institution_type: string;
+  nodal_officer_name: string;
+  nodal_officer_email: string;
+  registered_phone: string;
+  is_active: boolean;
+  total_approved_intake: number;
+  total_enrolled: number;
+  compliance_status: "COMPLIANT" | "EXCEEDED" | "DEACTIVATED";
+}
+
+export interface StakeholderAlertItem {
+  id: string;
+  alert_type: "INTAKE_EXCEEDED" | "CROSS_INSTITUTION_CONFLICT" | "DUPLICATE_APAAR" | "MISSING_APAAR" | "FORECAST_SURGE_WARNING";
+  severity: "CRITICAL" | "WARNING" | "INFO";
+  title: string;
+  aicte_id: string;
+  college_name: string;
+  department?: string;
+  details: string;
+  count: number;
+  action_url?: string;
+}
+
+export interface TimeSeriesDataPoint {
+  year: string;
+  year_int: number;
+  month?: number;
+  approved_intake: number;
+  actual_enrolment: number;
+  trend: number;
+  seasonal: number;
+  residual: number;
+  growth_rate_pct: number;
+}
+
+export interface ForecastingResult {
+  grouping_key: string;
+  programme: string;
+  state: string;
+  institution_type: string;
+  aicte_id?: string;
+  college_name?: string;
+  current_approved_intake: number;
+  historical_points: TimeSeriesDataPoint[];
+  projected_year: string;
+  projected_intake_p50: number;
+  projected_intake_p10: number;
+  projected_intake_p90: number;
+  projected_overflow_pct: number;
+  is_critical_overflow: boolean;
+  alert_message?: string;
+  seasonal_admission_peak_month: string;
+  recommended_action: string;
 }
 
 export interface AuditLogItem {
@@ -115,5 +221,7 @@ export interface UserAuthContext {
   token: string;
   aicte_id: string;
   college_name: string;
-  role: "INSTITUTE_ADMIN" | "AICTE_VERIFIER" | "PUBLIC";
+  role: "INSTITUTE_ADMIN" | "AICTE_VERIFIER" | "STUDENT" | "PUBLIC";
+  apaar_id?: string;
+  student_name?: string;
 }

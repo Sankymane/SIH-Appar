@@ -1,6 +1,16 @@
 import React, { useState, useEffect } from "react";
-import { searchInstitutions, loginStep2, loginStep3 } from "../api";
+import {
+  searchInstitutions,
+  instituteRequestOtp,
+  loginStep3,
+  studentRequestOtp,
+  studentVerifyOtp,
+  regulatorRequestOtp,
+  regulatorVerifyOtp,
+  verifyPhoneEmail
+} from "../api";
 import { UserAuthContext } from "../types";
+import { SignInButton } from "./SignInButton";
 import {
   X,
   Search,
@@ -10,13 +20,17 @@ import {
   Building,
   CheckCircle2,
   ArrowRight,
-  Sparkles
+  Sparkles,
+  GraduationCap,
+  ShieldAlert,
+  PhoneCall
 } from "lucide-react";
 
 interface LoginModalProps {
   isOpen: boolean;
   onClose: () => void;
   onLoginSuccess: (authData: UserAuthContext) => void;
+  initialMode?: "STUDENT" | "INSTITUTE" | "STAKEHOLDER";
   initialAicteId?: string;
   initialCollegeName?: string;
 }
@@ -25,148 +39,379 @@ export const LoginModal: React.FC<LoginModalProps> = ({
   isOpen,
   onClose,
   onLoginSuccess,
+  initialMode = "INSTITUTE",
   initialAicteId,
   initialCollegeName,
 }) => {
+  const [loginMode, setLoginMode] = useState<"STUDENT" | "INSTITUTE" | "STAKEHOLDER">(initialMode);
   const [step, setStep] = useState<number>(1);
 
-  // Step 1: Search & Select
+  // Student State
+  const [apaarInput, setApaarInput] = useState<string>("126430259751");
+  const [studentName, setStudentName] = useState<string>("");
+
+  // Institute State
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [selectedCollege, setSelectedCollege] = useState<{ aicte_id: string; name: string } | null>(null);
 
-  // Step 2: Password
-  const [password, setPassword] = useState<string>("aicte@123");
-  const [errorMsg, setErrorMsg] = useState<string>("");
-
-  // Step 3: OTP
+  // OTP Verification State (Enforced Global Phone 8767434172)
   const [otp, setOtp] = useState<string>("");
   const [simulatedOtp, setSimulatedOtp] = useState<string>("");
   const [sessionToken, setSessionToken] = useState<string>("");
   const [otpMessage, setOtpMessage] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(false);
+  const [errorMsg, setErrorMsg] = useState<string>("");
 
   useEffect(() => {
+    setLoginMode(initialMode);
+    setStep(1);
+    setErrorMsg("");
     if (initialAicteId && initialCollegeName) {
       setSelectedCollege({ aicte_id: initialAicteId, name: initialCollegeName });
-      setStep(2);
     }
-  }, [initialAicteId, initialCollegeName]);
+  }, [initialMode, initialAicteId, initialCollegeName, isOpen]);
 
-  // Live search institutions for Step 1
+  // Live autocomplete search for institutions
   useEffect(() => {
-    if (searchQuery.trim().length >= 1) {
+    if (loginMode === "INSTITUTE" && searchQuery.trim().length >= 1) {
       searchInstitutions(searchQuery).then((res) => {
         setSearchResults(res || []);
       });
     } else {
       setSearchResults([]);
     }
-  }, [searchQuery]);
+  }, [searchQuery, loginMode]);
 
   if (!isOpen) return null;
 
-  const handleSelectCollege = (c: any) => {
-    setSelectedCollege({ aicte_id: c.aicte_id, name: c.name });
-    setErrorMsg("");
-    setStep(2);
-  };
-
-  const handleStep2Submit = async (e: React.FormEvent) => {
+  // 1. Student: Trigger OTP
+  const handleStudentTriggerOtp = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedCollege) return;
+    if (!apaarInput.trim()) return;
+
     setLoading(true);
     setErrorMsg("");
-
     try {
-      const res = await loginStep2(selectedCollege.aicte_id, password);
+      const res = await studentRequestOtp(apaarInput.trim());
       setSessionToken(res.session_token);
       setSimulatedOtp(res.simulated_otp);
-      setOtpMessage(res.message);
-      setStep(3);
+      setStudentName(res.student_name);
+      setOtpMessage(`Verification code sent to registered DigiLocker phone (+91 87674****72)`);
+      setStep(2); // Go to OTP screen
     } catch (err: any) {
-      setErrorMsg(err.message || "Invalid credentials");
+      setErrorMsg(err.message || "Failed to trigger student OTP");
     } finally {
       setLoading(false);
     }
   };
 
-  const handleStep3Submit = async (e: React.FormEvent) => {
+  // 1. Student: Verify OTP
+  const handleStudentVerifyOtp = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedCollege) return;
     setLoading(true);
     setErrorMsg("");
-
     try {
-      const res = await loginStep3(selectedCollege.aicte_id, otp || simulatedOtp, sessionToken);
+      const res = await studentVerifyOtp(apaarInput.trim(), otp.trim(), sessionToken);
       localStorage.setItem("aicte_token", res.access_token);
       onLoginSuccess({
         token: res.access_token,
         aicte_id: res.aicte_id,
         college_name: res.college_name,
-        role: res.role,
+        role: "STUDENT",
+        apaar_id: res.apaar_id,
+        student_name: res.student_name,
       });
       onClose();
     } catch (err: any) {
-      setErrorMsg(err.message || "Invalid or expired OTP");
+      setErrorMsg(err.message || "OTP verification failed");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 2. Institute: Select College and immediately trigger OTP to 8767434172
+  const handleSelectCollegeTriggerOtp = async (college: { aicte_id: string; name: string }) => {
+    setSelectedCollege(college);
+    setLoading(true);
+    setErrorMsg("");
+    try {
+      const res = await instituteRequestOtp(college.aicte_id);
+      setSessionToken(res.session_token);
+      setSimulatedOtp(res.simulated_otp);
+      setOtpMessage(`Verification code dispatched to authorized nodal phone (+91 87674****72)`);
+      setStep(2); // Go to OTP screen
+    } catch (err: any) {
+      setErrorMsg(err.message || "Failed to trigger institute OTP");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 2. Institute: Verify OTP
+  const handleInstituteVerifyOtp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedCollege) return;
+    setLoading(true);
+    setErrorMsg("");
+    try {
+      const res = await loginStep3(selectedCollege.aicte_id, otp.trim(), sessionToken);
+      localStorage.setItem("aicte_token", res.access_token);
+      onLoginSuccess({
+        token: res.access_token,
+        aicte_id: res.aicte_id,
+        college_name: res.college_name,
+        role: "INSTITUTE_ADMIN",
+      });
+      onClose();
+    } catch (err: any) {
+      setErrorMsg(err.message || "OTP verification failed");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 3. Stakeholder: Trigger OTP
+  const handleStakeholderTriggerOtp = async () => {
+    setLoading(true);
+    setErrorMsg("");
+    try {
+      const res = await regulatorRequestOtp();
+      setSessionToken(res.session_token);
+      setSimulatedOtp(res.simulated_otp);
+      setOtpMessage(`Security code dispatched to authorized regulator mobile (+91 87674****72)`);
+      setStep(2);
+    } catch (err: any) {
+      setErrorMsg(err.message || "Failed to trigger stakeholder OTP");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 3. Stakeholder: Verify OTP
+  const handleStakeholderVerifyOtp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setErrorMsg("");
+    try {
+      const res = await regulatorVerifyOtp(otp.trim(), sessionToken);
+      localStorage.setItem("aicte_token", res.access_token);
+      onLoginSuccess({
+        token: res.access_token,
+        aicte_id: res.aicte_id,
+        college_name: res.college_name,
+        role: "AICTE_VERIFIER",
+      });
+      onClose();
+    } catch (err: any) {
+      setErrorMsg(err.message || "Stakeholder OTP verification failed");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // phone.email Verified Callback Handler
+  const handlePhoneEmailVerified = async (userJsonUrl: string) => {
+    setLoading(true);
+    setErrorMsg("");
+    try {
+      const identifier =
+        loginMode === "STUDENT"
+          ? apaarInput.trim()
+          : loginMode === "STAKEHOLDER"
+          ? "AICTE_HQ_NEW_DELHI"
+          : selectedCollege?.aicte_id || "1-44465113304";
+
+      const res = await verifyPhoneEmail(
+        userJsonUrl,
+        loginMode === "STUDENT" ? "STUDENT" : loginMode === "STAKEHOLDER" ? "AICTE_VERIFIER" : "INSTITUTE_ADMIN",
+        identifier
+      );
+
+      localStorage.setItem("aicte_token", res.access_token);
+      onLoginSuccess({
+        token: res.access_token,
+        aicte_id: res.aicte_id,
+        college_name: res.college_name,
+        role: res.role as any,
+        apaar_id: res.apaar_id,
+        student_name: res.student_name,
+      });
+      onClose();
+    } catch (err: any) {
+      setErrorMsg(err.message || "phone.email verification failed");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-card" onClick={(e) => e.stopPropagation()}>
-        {/* Modal Header */}
-        <div className="modal-header">
-          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-            <Lock size={16} />
-            <h3 style={{ fontSize: "14px", fontWeight: 700 }}>
-              AICTE Institute Secure Login (3-Step Authentication)
-            </h3>
+    <div
+      style={{
+        position: "fixed",
+        inset: 0,
+        backgroundColor: "rgba(11, 34, 101, 0.7)",
+        backdropFilter: "blur(4px)",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        zIndex: 9999,
+        padding: "16px",
+      }}
+    >
+      <div
+        style={{
+          background: "#ffffff",
+          borderRadius: "12px",
+          width: "100%",
+          maxWidth: "520px",
+          boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)",
+          overflow: "hidden",
+          border: "2px solid #0B2265",
+        }}
+      >
+        {/* Modal Top Masthead */}
+        <div
+          style={{
+            background: "#0B2265",
+            color: "#ffffff",
+            padding: "16px 20px",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+            <ShieldCheck size={22} color="#FF5722" />
+            <div>
+              <div style={{ fontSize: "15px", fontWeight: 800 }}>AICTE Secure Access Gateway</div>
+              <div style={{ fontSize: "11px", opacity: 0.8 }}>National APAAR Verification System</div>
+            </div>
           </div>
           <button
             onClick={onClose}
-            style={{ background: "none", border: "none", color: "#fff", cursor: "pointer", fontSize: "18px" }}
+            style={{
+              background: "transparent",
+              border: "none",
+              color: "#ffffff",
+              cursor: "pointer",
+              padding: "4px",
+            }}
           >
-            <X size={18} />
+            <X size={20} />
           </button>
         </div>
 
-        {/* Modal Body */}
-        <div className="modal-body">
-          {/* Stepper Progress */}
-          <div className="stepper-header">
-            <div style={{ textAlign: "center" }}>
-              <div className={`step-circle ${step >= 1 ? (step > 1 ? "completed" : "active") : ""}`}>
-                {step > 1 ? <CheckCircle2 size={16} /> : "1"}
-              </div>
-              <div style={{ fontSize: "10px", marginTop: "4px", fontWeight: 600 }}>Select Institute</div>
-            </div>
+        {/* Portal Role Switcher Tabs (Only visible on Step 1) */}
+        {step === 1 && (
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "1fr 1fr 1fr",
+              borderBottom: "1px solid #e2e8f0",
+              background: "#f8fafc",
+            }}
+          >
+            <button
+              onClick={() => {
+                setLoginMode("STUDENT");
+                setErrorMsg("");
+              }}
+              style={{
+                padding: "10px",
+                border: "none",
+                background: loginMode === "STUDENT" ? "#ffffff" : "transparent",
+                borderBottom: loginMode === "STUDENT" ? "3px solid #0B2265" : "none",
+                color: loginMode === "STUDENT" ? "#0B2265" : "#64748b",
+                fontWeight: 700,
+                fontSize: "12px",
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: "6px",
+              }}
+            >
+              <GraduationCap size={15} /> Student
+            </button>
 
-            <div style={{ textAlign: "center" }}>
-              <div className={`step-circle ${step >= 2 ? (step > 2 ? "completed" : "active") : ""}`}>
-                {step > 2 ? <CheckCircle2 size={16} /> : "2"}
-              </div>
-              <div style={{ fontSize: "10px", marginTop: "4px", fontWeight: 600 }}>Password</div>
-            </div>
+            <button
+              onClick={() => {
+                setLoginMode("INSTITUTE");
+                setErrorMsg("");
+              }}
+              style={{
+                padding: "10px",
+                border: "none",
+                background: loginMode === "INSTITUTE" ? "#ffffff" : "transparent",
+                borderBottom: loginMode === "INSTITUTE" ? "3px solid #FF5722" : "none",
+                color: loginMode === "INSTITUTE" ? "#FF5722" : "#64748b",
+                fontWeight: 700,
+                fontSize: "12px",
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: "6px",
+              }}
+            >
+              <Building size={15} /> Institutional
+            </button>
 
-            <div style={{ textAlign: "center" }}>
-              <div className={`step-circle ${step === 3 ? "active" : ""}`}>
-                3
-              </div>
-              <div style={{ fontSize: "10px", marginTop: "4px", fontWeight: 600 }}>2FA OTP</div>
-            </div>
+            <button
+              onClick={() => {
+                setLoginMode("STAKEHOLDER");
+                setErrorMsg("");
+              }}
+              style={{
+                padding: "10px",
+                border: "none",
+                background: loginMode === "STAKEHOLDER" ? "#ffffff" : "transparent",
+                borderBottom: loginMode === "STAKEHOLDER" ? "3px solid #7c3aed" : "none",
+                color: loginMode === "STAKEHOLDER" ? "#7c3aed" : "#64748b",
+                fontWeight: 700,
+                fontSize: "12px",
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: "6px",
+              }}
+            >
+              <ShieldAlert size={15} /> AICTE Regulator
+            </button>
           </div>
+        )}
 
+        {/* Global Security OTP Routing Banner */}
+        <div
+          style={{
+            background: "#fffbeb",
+            borderBottom: "1px solid #fef3c7",
+            padding: "8px 16px",
+            fontSize: "11px",
+            color: "#92400e",
+            display: "flex",
+            alignItems: "center",
+            gap: "8px",
+          }}
+        >
+          <PhoneCall size={14} color="#b45309" />
+          <span>
+            Development Security Notice: All verification OTPs route strictly to: <strong>+91 8767434172</strong>
+          </span>
+        </div>
+
+        {/* Modal Body */}
+        <div style={{ padding: "24px" }}>
           {errorMsg && (
             <div
               style={{
-                background: "#fee2e2",
-                border: "1px solid #f87171",
+                background: "#fef2f2",
+                border: "1px solid #fca5a5",
                 color: "#991b1b",
-                padding: "8px 12px",
-                borderRadius: "4px",
+                padding: "10px 14px",
+                borderRadius: "6px",
                 fontSize: "12px",
                 marginBottom: "16px",
               }}
@@ -175,237 +420,323 @@ export const LoginModal: React.FC<LoginModalProps> = ({
             </div>
           )}
 
-          {/* -------------------------------------------------------------
-              STEP 1: Institute Search & Selection
-              ------------------------------------------------------------- */}
+          {/* ============================================================== */}
+          {/* STEP 1: INITIAL INPUT PER ROLE */}
+          {/* ============================================================== */}
           {step === 1 && (
             <div>
-              <label style={{ display: "block", fontSize: "13px", fontWeight: 700, marginBottom: "6px" }}>
-                Step 1: Search & Select AICTE Approved Institution
-              </label>
-              <div style={{ position: "relative", marginBottom: "12px" }}>
-                <input
-                  type="text"
-                  className="filter-input"
-                  style={{ paddingLeft: "32px" }}
-                  placeholder="Type college name or AICTE ID (e.g. Xavier, Government, 1-44...)"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  autoFocus
-                />
-                <Search size={14} style={{ position: "absolute", left: "10px", top: "11px", color: "#64748b" }} />
-              </div>
-
-              {/* Autocomplete Dropdown List */}
-              <div
-                style={{
-                  maxHeight: "220px",
-                  overflowY: "auto",
-                  border: "1px solid #e2e8f0",
-                  borderRadius: "4px",
-                  background: "#ffffff",
-                }}
-              >
-                {searchResults.length === 0 ? (
-                  <div style={{ padding: "16px", textAlign: "center", fontSize: "12px", color: "#64748b" }}>
-                    {searchQuery
-                      ? "No matching institutes found."
-                      : "Start typing to search institutes from the master registry..."}
-                  </div>
-                ) : (
-                  searchResults.map((c) => (
-                    <div
-                      key={c.aicte_id}
+              {/* 1. STUDENT LOGIN FORM */}
+              {loginMode === "STUDENT" && (
+                <form onSubmit={handleStudentTriggerOtp}>
+                  <div style={{ marginBottom: "16px" }}>
+                    <label style={{ display: "block", fontSize: "12px", fontWeight: 700, color: "#334155", marginBottom: "6px" }}>
+                      Enter 12-Digit Student APAAR ID *
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      autoFocus
+                      maxLength={14}
+                      value={apaarInput}
+                      onChange={(e) => setApaarInput(e.target.value)}
+                      placeholder="e.g. 126430259751"
                       style={{
-                        padding: "10px 14px",
-                        borderBottom: "1px solid #f1f5f9",
-                        cursor: "pointer",
-                        transition: "background 0.15s",
+                        width: "100%",
+                        padding: "12px",
+                        borderRadius: "6px",
+                        border: "2px solid #0B2265",
+                        fontSize: "18px",
+                        letterSpacing: "2px",
+                        fontWeight: 700,
+                        color: "#0B2265",
+                        boxSizing: "border-box",
                       }}
-                      onMouseEnter={(e) => (e.currentTarget.style.background = "#f0f7ff")}
-                      onMouseLeave={(e) => (e.currentTarget.style.background = "#ffffff")}
-                      onClick={() => handleSelectCollege(c)}
-                    >
-                      <div style={{ fontSize: "12px", fontWeight: 700, color: "#0B2265" }}>{c.name}</div>
-                      <div style={{ fontSize: "11px", color: "#64748b" }}>
-                        ID: <b>{c.aicte_id}</b> | {c.district}, {c.state}
-                      </div>
-                    </div>
-                  ))
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* -------------------------------------------------------------
-              STEP 2: Password Entry
-              ------------------------------------------------------------- */}
-          {step === 2 && selectedCollege && (
-            <form onSubmit={handleStep2Submit}>
-              <div
-                style={{
-                  background: "#f0f7ff",
-                  padding: "10px 14px",
-                  borderRadius: "4px",
-                  marginBottom: "16px",
-                  fontSize: "12px",
-                }}
-              >
-                <div style={{ color: "#64748b" }}>Logging in for:</div>
-                <div style={{ fontWeight: 700, color: "#0B2265" }}>{selectedCollege.name}</div>
-                <div style={{ fontSize: "11px", color: "#475569" }}>AICTE ID: {selectedCollege.aicte_id}</div>
-              </div>
-
-              <div style={{ marginBottom: "16px" }}>
-                <label style={{ display: "block", fontSize: "12px", fontWeight: 700, marginBottom: "4px" }}>
-                  Institutional Portal Password:
-                </label>
-                <input
-                  type="password"
-                  className="filter-input"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Enter institutional password"
-                  required
-                />
-                <div style={{ fontSize: "11px", color: "#059669", marginTop: "4px", fontWeight: 600 }}>
-                  Demo Master Password: <code>aicte@123</code>
-                </div>
-              </div>
-
-              <div style={{ display: "flex", justifyContent: "space-between", gap: "10px" }}>
-                <button
-                  type="button"
-                  style={{
-                    background: "#e2e8f0",
-                    border: "none",
-                    padding: "8px 16px",
-                    borderRadius: "4px",
-                    fontSize: "12px",
-                    cursor: "pointer",
-                  }}
-                  onClick={() => setStep(1)}
-                >
-                  Back
-                </button>
-                <button
-                  type="submit"
-                  className="btn-filter-submit"
-                  style={{ width: "auto", flexGrow: 1, marginTop: 0 }}
-                  disabled={loading}
-                >
-                  {loading ? "Verifying..." : "Proceed to 2FA OTP"}
-                </button>
-              </div>
-            </form>
-          )}
-
-          {/* -------------------------------------------------------------
-              STEP 3: Simulated 2FA OTP
-              ------------------------------------------------------------- */}
-          {step === 3 && (
-            <form onSubmit={handleStep3Submit}>
-              <div
-                style={{
-                  background: "#fef3c7",
-                  border: "1px solid #fde68a",
-                  padding: "12px",
-                  borderRadius: "6px",
-                  marginBottom: "16px",
-                  textAlign: "center",
-                }}
-              >
-                <div style={{ fontSize: "12px", color: "#92400e", fontWeight: 600, marginBottom: "6px" }}>
-                  {otpMessage || "OTP has been dispatched to registered Nodal Officer contact."}
-                </div>
-
-                {/* Simulated OTP Display for Evaluator */}
-                <div
-                  style={{
-                    background: "#ffffff",
-                    border: "2px dashed #f59e0b",
-                    padding: "8px 14px",
-                    borderRadius: "6px",
-                    display: "inline-block",
-                    margin: "6px 0",
-                  }}
-                >
-                  <div style={{ fontSize: "10px", color: "#6b7280", textTransform: "uppercase", fontWeight: 700 }}>
-                    Simulated SMS/Email Gateway Code
+                    />
                   </div>
-                  <div style={{ fontSize: "22px", fontWeight: 800, letterSpacing: "4px", color: "#d97706" }}>
-                    {simulatedOtp || "482910"}
-                  </div>
-                </div>
 
-                <div>
-                  <button
-                    type="button"
+                  <div
                     style={{
+                      background: "#f0fdf4",
+                      border: "1px solid #bbf7d0",
+                      padding: "10px 12px",
+                      borderRadius: "6px",
+                      fontSize: "11px",
+                      color: "#166534",
+                      marginBottom: "16px",
+                    }}
+                  >
+                    💡 <strong>1-Click Demo Profile:</strong> Default APAAR <strong>126430259751</strong> (Sankalp Hemant Mane, DigiLocker ABC Card).
+                  </div>
+
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    style={{
+                      width: "100%",
                       background: "#0B2265",
                       color: "#ffffff",
                       border: "none",
-                      padding: "4px 12px",
-                      borderRadius: "12px",
-                      fontSize: "11px",
+                      padding: "12px",
+                      borderRadius: "6px",
                       fontWeight: 700,
+                      fontSize: "14px",
                       cursor: "pointer",
-                      display: "inline-flex",
+                      display: "flex",
                       alignItems: "center",
-                      gap: "4px",
-                      marginTop: "4px",
+                      justifyContent: "center",
+                      gap: "8px",
                     }}
-                    onClick={() => setOtp(simulatedOtp || "482910")}
                   >
-                    <Sparkles size={11} /> 1-Click Auto-Fill Code
+                    {loading ? "Dispatching OTP..." : "Send OTP to +91 8767434172 →"}
+                  </button>
+                </form>
+              )}
+
+              {/* 2. INSTITUTIONAL LOGIN FORM (Search & Select) */}
+              {loginMode === "INSTITUTE" && (
+                <div>
+                  <div style={{ marginBottom: "12px" }}>
+                    <label style={{ display: "block", fontSize: "12px", fontWeight: 700, color: "#334155", marginBottom: "6px" }}>
+                      Search and Select Your Institution *
+                    </label>
+                    <div style={{ position: "relative" }}>
+                      <input
+                        type="text"
+                        autoFocus
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        placeholder="Type college name (e.g., IIT, Xavier, D. Y. Patil, Govt)..."
+                        style={{
+                          width: "100%",
+                          padding: "10px 12px 10px 36px",
+                          borderRadius: "6px",
+                          border: "1px solid #cbd5e1",
+                          fontSize: "13px",
+                          boxSizing: "border-box",
+                        }}
+                      />
+                      <Search
+                        size={16}
+                        color="#64748b"
+                        style={{ position: "absolute", left: "12px", top: "50%", transform: "translateY(-50%)" }}
+                      />
+                    </div>
+                  </div>
+
+                  <div style={{ fontSize: "11px", color: "#64748b", marginBottom: "10px" }}>
+                    Clicking your college immediately dispatches an OTP to <strong>+91 8767434172</strong>.
+                  </div>
+
+                  {/* Search Results List */}
+                  <div
+                    style={{
+                      maxHeight: "220px",
+                      overflowY: "auto",
+                      border: "1px solid #e2e8f0",
+                      borderRadius: "6px",
+                      background: "#ffffff",
+                    }}
+                  >
+                    {searchResults.length > 0 ? (
+                      searchResults.map((c) => (
+                        <div
+                          key={c.aicte_id}
+                          onClick={() => handleSelectCollegeTriggerOtp(c)}
+                          style={{
+                            padding: "10px 14px",
+                            borderBottom: "1px solid #f1f5f9",
+                            cursor: "pointer",
+                            transition: "background 0.15s",
+                          }}
+                          onMouseEnter={(e) => (e.currentTarget.style.background = "#fff7ed")}
+                          onMouseLeave={(e) => (e.currentTarget.style.background = "#ffffff")}
+                        >
+                          <div style={{ fontSize: "13px", fontWeight: 700, color: "#0B2265" }}>{c.name}</div>
+                          <div style={{ fontSize: "11px", color: "#64748b" }}>
+                            AICTE ID: {c.aicte_id} • {c.district}, {c.state}
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <div style={{ padding: "20px", textAlign: "center", color: "#94a3b8", fontSize: "12px" }}>
+                        {searchQuery ? "No matching institution found." : "Type above to search from 13,000+ AICTE colleges."}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* 3. STAKEHOLDER (AICTE) LOGIN FORM */}
+              {loginMode === "STAKEHOLDER" && (
+                <div style={{ textAlign: "center", padding: "10px 0" }}>
+                  <div
+                    style={{
+                      width: "60px",
+                      height: "60px",
+                      borderRadius: "50%",
+                      background: "#f5f3ff",
+                      color: "#7c3aed",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      margin: "0 auto 16px auto",
+                    }}
+                  >
+                    <ShieldAlert size={32} />
+                  </div>
+
+                  <h3 style={{ fontSize: "17px", fontWeight: 800, color: "#0B2265", marginBottom: "6px" }}>
+                    AICTE Central Regulatory Bureau
+                  </h3>
+                  <p style={{ fontSize: "13px", color: "#64748b", marginBottom: "20px" }}>
+                    Authorized access for vigilance officers, state auditors, and central regulatory commissioners.
+                  </p>
+
+                  <button
+                    onClick={handleStakeholderTriggerOtp}
+                    disabled={loading}
+                    style={{
+                      width: "100%",
+                      background: "#7c3aed",
+                      color: "#ffffff",
+                      border: "none",
+                      padding: "12px",
+                      borderRadius: "6px",
+                      fontWeight: 700,
+                      fontSize: "14px",
+                      cursor: "pointer",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      gap: "8px",
+                    }}
+                  >
+                    {loading ? "Dispatching 2FA OTP..." : "Send Regulator OTP to +91 8767434172 →"}
                   </button>
                 </div>
-              </div>
+              )}
+            </div>
+          )}
 
-              <div style={{ marginBottom: "16px" }}>
-                <label style={{ display: "block", fontSize: "12px", fontWeight: 700, marginBottom: "4px" }}>
-                  Enter 6-Digit OTP:
-                </label>
-                <input
-                  type="text"
-                  className="filter-input"
-                  style={{ fontSize: "18px", letterSpacing: "4px", textAlign: "center", fontWeight: 700 }}
-                  maxLength={6}
-                  value={otp}
-                  onChange={(e) => setOtp(e.target.value)}
-                  placeholder="••••••"
-                  required
-                />
-                <div style={{ fontSize: "10px", color: "#64748b", marginTop: "4px", textAlign: "center" }}>
-                  Master Bypass OTP: <code>123456</code>
+          {/* ============================================================== */}
+          {/* STEP 2: ENTER OTP OR USE PHONE.EMAIL WIDGET */}
+          {/* ============================================================== */}
+          {step === 2 && (
+            <div>
+              <div style={{ textAlign: "center", marginBottom: "18px" }}>
+                <div
+                  style={{
+                    width: "50px",
+                    height: "50px",
+                    borderRadius: "50%",
+                    background: "#eff6ff",
+                    color: "#1d4ed8",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    margin: "0 auto 10px auto",
+                  }}
+                >
+                  <KeyRound size={26} />
                 </div>
+                <h3 style={{ fontSize: "17px", fontWeight: 800, color: "#0B2265", margin: 0 }}>
+                  Enter Verification Code
+                </h3>
+                <p style={{ fontSize: "12px", color: "#64748b", margin: "4px 0 0 0" }}>{otpMessage}</p>
               </div>
 
-              <div style={{ display: "flex", justifyContent: "space-between", gap: "10px" }}>
+              <form
+                onSubmit={
+                  loginMode === "STUDENT"
+                    ? handleStudentVerifyOtp
+                    : loginMode === "STAKEHOLDER"
+                    ? handleStakeholderVerifyOtp
+                    : handleInstituteVerifyOtp
+                }
+              >
+                <div style={{ marginBottom: "14px" }}>
+                  <label style={{ display: "block", fontSize: "12px", fontWeight: 700, color: "#334155", marginBottom: "6px" }}>
+                    6-Digit One-Time Password (OTP) *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    autoFocus
+                    maxLength={6}
+                    value={otp}
+                    onChange={(e) => setOtp(e.target.value)}
+                    placeholder="e.g. 123456"
+                    style={{
+                      width: "100%",
+                      padding: "12px",
+                      borderRadius: "6px",
+                      border: "2px solid #0B2265",
+                      fontSize: "22px",
+                      letterSpacing: "6px",
+                      textAlign: "center",
+                      fontWeight: 800,
+                      boxSizing: "border-box",
+                    }}
+                  />
+                </div>
+
+                {/* 1-Click Autofill Button for test convenience */}
                 <button
                   type="button"
+                  onClick={() => setOtp("123456")}
                   style={{
-                    background: "#e2e8f0",
-                    border: "none",
-                    padding: "8px 16px",
-                    borderRadius: "4px",
+                    width: "100%",
+                    background: "#eff6ff",
+                    color: "#1d4ed8",
+                    border: "1px dashed #93c5fd",
+                    padding: "8px",
+                    borderRadius: "6px",
                     fontSize: "12px",
+                    fontWeight: 700,
                     cursor: "pointer",
+                    marginBottom: "14px",
                   }}
-                  onClick={() => setStep(2)}
                 >
-                  Back
+                  ⚡ Autofill Master Test OTP: 123456
                 </button>
+
                 <button
                   type="submit"
-                  className="btn-filter-submit"
-                  style={{ width: "auto", flexGrow: 1, marginTop: 0 }}
                   disabled={loading}
+                  style={{
+                    width: "100%",
+                    background: "#FF5722",
+                    color: "#ffffff",
+                    border: "none",
+                    padding: "12px",
+                    borderRadius: "6px",
+                    fontWeight: 700,
+                    fontSize: "14px",
+                    cursor: "pointer",
+                    marginBottom: "16px",
+                  }}
                 >
-                  {loading ? "Authenticating..." : "Verify OTP & Enter Dashboard"}
+                  {loading ? "Verifying..." : "Verify OTP & Enter Portal →"}
+                </button>
+              </form>
+
+              {/* Or use phone.email 1-Tap Widget */}
+              <div style={{ borderTop: "1px solid #e2e8f0", paddingTop: "14px", textAlign: "center" }}>
+                <SignInButton onVerified={handlePhoneEmailVerified} />
+              </div>
+
+              <div style={{ textAlign: "center", marginTop: "12px" }}>
+                <button
+                  onClick={() => {
+                    setStep(1);
+                    setErrorMsg("");
+                  }}
+                  style={{ background: "none", border: "none", fontSize: "12px", color: "#64748b", cursor: "pointer", textDecoration: "underline" }}
+                >
+                  ← Back to Selection
                 </button>
               </div>
-            </form>
+            </div>
           )}
         </div>
       </div>

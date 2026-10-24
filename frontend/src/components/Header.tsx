@@ -9,16 +9,20 @@ import {
   Search,
   BookOpen,
   Award,
-  Globe
+  Globe,
+  GraduationCap,
+  ShieldAlert,
+  PhoneCall,
+  TrendingUp,
+  User
 } from "lucide-react";
 
 interface HeaderProps {
   currentTab: string;
   setCurrentTab: (tab: string) => void;
   auth: UserAuthContext;
-  onOpenLoginModal: () => void;
+  onOpenLoginModal: (mode?: "STUDENT" | "INSTITUTE" | "STAKEHOLDER") => void;
   onLogout: () => void;
-  onQuickRegulatorLogin: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -27,7 +31,6 @@ export const Header: React.FC<HeaderProps> = ({
   auth,
   onOpenLoginModal,
   onLogout,
-  onQuickRegulatorLogin,
 }) => {
   const [currentDateTime, setCurrentDateTime] = useState<string>("");
 
@@ -60,6 +63,10 @@ export const Header: React.FC<HeaderProps> = ({
           <span className="utility-link">
             <Globe size={11} /> Screen Reader Access
           </span>
+          <span>|</span>
+          <span style={{ color: "#f97316", fontWeight: 700 }}>
+            🔒 Dev 2FA Mobile: +91 8767434172
+          </span>
         </div>
         <div className="top-utility-right">
           <div className="font-resizer">
@@ -69,30 +76,30 @@ export const Header: React.FC<HeaderProps> = ({
             <button className="font-btn">A+</button>
           </div>
           <button className="hindi-btn">हिंदी</button>
-          <button
-            className="web-portal-login-btn"
-            onClick={onOpenLoginModal}
-            title="Institute APAAR Gateway"
-          >
-            <Lock size={11} /> Web Portal Login
-          </button>
+          {auth.role === "PUBLIC" && (
+            <button
+              className="web-portal-login-btn"
+              onClick={() => onOpenLoginModal("INSTITUTE")}
+              title="Institute APAAR Gateway"
+            >
+              <Lock size={11} /> Institute Login
+            </button>
+          )}
         </div>
       </div>
 
       {/* 2. White Brand Masthead */}
       <div className="brand-masthead">
-        <div className="brand-emblem-wrap" onClick={() => setCurrentTab("explorer")}>
+        <div className="brand-emblem-wrap" onClick={() => setCurrentTab(auth.role === "PUBLIC" ? "landing" : auth.role === "STUDENT" ? "student-dashboard" : auth.role === "AICTE_VERIFIER" ? "stakeholder-dashboard" : "dashboard")}>
           {/* AICTE Official SVG Sun-Emblem */}
           <svg className="aicte-emblem-svg" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
             <circle cx="50" cy="50" r="46" fill="#F75700" stroke="#0B2265" strokeWidth="2" />
             <circle cx="50" cy="50" r="38" fill="#FFF9F5" />
-            {/* Cogwheel & Lamp */}
             <circle cx="50" cy="50" r="28" stroke="#0B2265" strokeWidth="3" strokeDasharray="6 3" />
             <path d="M50 24 L52 30 L48 30 Z" fill="#0B2265" />
             <path d="M50 76 L52 70 L48 70 Z" fill="#0B2265" />
             <path d="M24 50 L30 52 L30 48 Z" fill="#0B2265" />
             <path d="M76 50 L70 52 L70 48 Z" fill="#0B2265" />
-            {/* Traditional Lamp (Deepak) */}
             <path d="M38 56 C38 64 62 64 62 56 L38 56 Z" fill="#0B2265" />
             <path d="M50 42 C47 48 53 48 50 42 Z" fill="#F75700" />
             <circle cx="50" cy="46" r="2" fill="#FFC107" />
@@ -109,8 +116,8 @@ export const Header: React.FC<HeaderProps> = ({
         {/* Right Badge: APAAR ID Integration System */}
         <div className="brand-right-badges">
           <div className="apaar-badge">
-            <div className="apaar-badge-title">APAAR ID STUDENT REGISTRY</div>
-            <div className="apaar-badge-sub">One Nation, One Student ID (NEP 2020)</div>
+            <div className="apaar-badge-title">APAAR ID STUDENT DATA MANAGEMENT</div>
+            <div className="apaar-badge-sub">SIH Problem Statement 26263 • AICTE Approved Institutions</div>
           </div>
         </div>
       </div>
@@ -118,90 +125,185 @@ export const Header: React.FC<HeaderProps> = ({
       {/* 3. Deep Corporate Blue Main Navigation */}
       <nav className="main-navbar">
         <ul className="nav-links">
-          <li
-            className={`nav-item ${currentTab === "explorer" ? "active" : ""}`}
-            onClick={() => setCurrentTab("explorer")}
-          >
-            <Building size={14} /> Approved Institutions Explorer
-          </li>
-          <li
-            className={`nav-item ${currentTab === "dashboard" ? "active" : ""}`}
-            onClick={() => {
-              if (auth.role === "PUBLIC") {
-                onOpenLoginModal();
-              } else {
-                setCurrentTab("dashboard");
-              }
-            }}
-          >
-            <BookOpen size={14} /> Institute Dashboard
-            {auth.role === "INSTITUTE_ADMIN" && (
-              <span style={{ background: "#2e7d32", padding: "1px 6px", borderRadius: "10px", fontSize: "10px" }}>
-                Active
-              </span>
-            )}
-          </li>
-          <li
-            className={`nav-item ${currentTab === "verify" ? "active" : ""}`}
-            onClick={() => setCurrentTab("verify")}
-          >
-            <ShieldCheck size={14} /> APAAR Verification Portal
-          </li>
-          <li
-            className={`nav-item ${currentTab === "audit" ? "active" : ""}`}
-            onClick={() => setCurrentTab("audit")}
-          >
-            <Award size={14} /> Regulatory Audit Trail
-          </li>
-          <li
-            className={`nav-item ${currentTab === "api-docs" ? "active" : ""}`}
-            onClick={() => setCurrentTab("api-docs")}
-          >
-            <ExternalLink size={14} /> REST API (Swagger)
-          </li>
+          {auth.role === "PUBLIC" ? (
+            <>
+              <li
+                className={`nav-item ${currentTab === "landing" ? "active" : ""}`}
+                onClick={() => setCurrentTab("landing")}
+              >
+                <ShieldCheck size={14} /> Role Selection Portals
+              </li>
+              <li
+                className={`nav-item ${currentTab === "explorer" ? "active" : ""}`}
+                onClick={() => setCurrentTab("explorer")}
+              >
+                <Building size={14} /> Approved Institutions Directory
+              </li>
+              <li
+                className={`nav-item ${currentTab === "api-docs" ? "active" : ""}`}
+                onClick={() => setCurrentTab("api-docs")}
+              >
+                <ExternalLink size={14} /> REST API Ready (Req 7)
+              </li>
+            </>
+          ) : auth.role === "STUDENT" ? (
+            <>
+              <li
+                className={`nav-item ${currentTab === "student-dashboard" ? "active" : ""}`}
+                onClick={() => setCurrentTab("student-dashboard")}
+              >
+                <GraduationCap size={14} /> My Academic Bank of Credits (ABC)
+              </li>
+            </>
+          ) : auth.role === "AICTE_VERIFIER" ? (
+            <>
+              <li
+                className={`nav-item ${currentTab === "stakeholder-dashboard" ? "active" : ""}`}
+                onClick={() => setCurrentTab("stakeholder-dashboard")}
+              >
+                <ShieldAlert size={14} /> Stakeholder Oversight Bureau
+              </li>
+              <li
+                className={`nav-item ${currentTab === "explorer" ? "active" : ""}`}
+                onClick={() => setCurrentTab("explorer")}
+              >
+                <Building size={14} /> National Colleges Directory
+              </li>
+              <li
+                className={`nav-item ${currentTab === "api-docs" ? "active" : ""}`}
+                onClick={() => setCurrentTab("api-docs")}
+              >
+                <ExternalLink size={14} /> REST API Endpoints
+              </li>
+            </>
+          ) : (
+            // INSTITUTE_ADMIN
+            <>
+              <li
+                className={`nav-item ${currentTab === "dashboard" ? "active" : ""}`}
+                onClick={() => setCurrentTab("dashboard")}
+              >
+                <BookOpen size={14} /> Institute Dashboard
+              </li>
+              <li
+                className={`nav-item ${currentTab === "explorer" ? "active" : ""}`}
+                onClick={() => setCurrentTab("explorer")}
+              >
+                <Building size={14} /> AICTE Registry Explorer
+              </li>
+              <li
+                className={`nav-item ${currentTab === "audit" ? "active" : ""}`}
+                onClick={() => setCurrentTab("audit")}
+              >
+                <Award size={14} /> Regulatory Audit Trail
+              </li>
+              <li
+                className={`nav-item ${currentTab === "api-docs" ? "active" : ""}`}
+                onClick={() => setCurrentTab("api-docs")}
+              >
+                <ExternalLink size={14} /> REST API
+              </li>
+            </>
+          )}
         </ul>
 
         {/* Auth / Role Switcher Section */}
         <div className="nav-auth-section">
           {auth.role === "PUBLIC" ? (
-            <>
+            <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
               <button
-                className="btn-regulator-toggle"
-                onClick={onQuickRegulatorLogin}
-                title="Switch to AICTE Regulator mode for compliance audits"
+                style={{
+                  background: "#eff6ff",
+                  color: "#1d4ed8",
+                  border: "1px solid #93c5fd",
+                  padding: "6px 12px",
+                  borderRadius: "4px",
+                  fontSize: "11px",
+                  fontWeight: 700,
+                  cursor: "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "5px"
+                }}
+                onClick={() => onOpenLoginModal("STUDENT")}
               >
-                <ShieldCheck size={12} /> AICTE Regulator Mode
+                <GraduationCap size={13} /> Student Login
               </button>
-              <button className="btn-institute-login" onClick={onOpenLoginModal}>
-                <Lock size={12} /> Institute Secure Login
+
+              <button
+                style={{
+                  background: "#FF5722",
+                  color: "#ffffff",
+                  border: "none",
+                  padding: "6px 12px",
+                  borderRadius: "4px",
+                  fontSize: "11px",
+                  fontWeight: 700,
+                  cursor: "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "5px"
+                }}
+                onClick={() => onOpenLoginModal("INSTITUTE")}
+              >
+                <Building size={13} /> Institute Login
               </button>
-            </>
+
+              <button
+                style={{
+                  background: "#7c3aed",
+                  color: "#ffffff",
+                  border: "none",
+                  padding: "6px 12px",
+                  borderRadius: "4px",
+                  fontSize: "11px",
+                  fontWeight: 700,
+                  cursor: "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "5px"
+                }}
+                onClick={() => onOpenLoginModal("STAKEHOLDER")}
+              >
+                <ShieldAlert size={13} /> Regulator Login
+              </button>
+            </div>
           ) : (
-            <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
               <div style={{ textAlign: "right", color: "#ffffff" }}>
                 <div style={{ fontSize: "12px", fontWeight: 700 }}>
-                  {auth.role === "AICTE_VERIFIER" ? "AICTE Regulator Bureau" : auth.college_name.slice(0, 30) + "..."}
+                  {auth.role === "STUDENT"
+                    ? (auth.student_name || "SANKALP HEMANT MANE")
+                    : auth.role === "AICTE_VERIFIER"
+                    ? "AICTE Central Regulatory Bureau"
+                    : auth.college_name.slice(0, 30) + "..."}
                 </div>
                 <div style={{ fontSize: "10px", opacity: 0.85 }}>
-                  {auth.role === "AICTE_VERIFIER" ? "Central Verification Officer" : `AICTE ID: ${auth.aicte_id}`}
+                  {auth.role === "STUDENT"
+                    ? `APAAR: ${auth.apaar_id || "126430259751"}`
+                    : auth.role === "AICTE_VERIFIER"
+                    ? "Authorized Vigilance Officer"
+                    : `AICTE ID: ${auth.aicte_id}`}
                 </div>
               </div>
+
               <button
                 onClick={onLogout}
                 style={{
                   background: "#dc2626",
                   color: "#ffffff",
                   border: "none",
-                  padding: "5px 10px",
+                  padding: "6px 12px",
                   borderRadius: "4px",
                   fontSize: "11px",
+                  fontWeight: 700,
                   cursor: "pointer",
                   display: "flex",
                   alignItems: "center",
-                  gap: "4px"
+                  gap: "4px",
                 }}
               >
-                <LogOut size={11} /> Logout
+                <LogOut size={12} /> Logout
               </button>
             </div>
           )}
@@ -213,14 +315,18 @@ export const Header: React.FC<HeaderProps> = ({
         <div className="news-badge">LATEST NEWS</div>
         <div className="ticker-content">
           ★ AICTE Directive 2026-2027: Mandatory APAAR ID Seeding for all sanctioned UG/PG admissions under NEP 2020.
-          &nbsp;&nbsp;&nbsp;&nbsp;★ Automated cross-institutional enrollment duplicate detection engine is now active across all 36 States & UTs.
+          &nbsp;&nbsp;&nbsp;&nbsp;★ All security verification OTPs routed strictly to development phone +91 8767434172.
+          &nbsp;&nbsp;&nbsp;&nbsp;★ AI-driven intake forecasting engine active: Institutions exceeding 30% projected demand flagged for early warnings.
           &nbsp;&nbsp;&nbsp;&nbsp;★ Nodal Officers must submit student intake verification before deadline.
         </div>
       </div>
 
-      {/* 5. Orange Sub-Navbar (Mirroring screenshot #2) */}
+      {/* 5. Orange Sub-Navbar (Mirroring official AICTE portal) */}
       <div className="sub-navbar">
-        <span className="sub-nav-item active" onClick={() => setCurrentTab("explorer")}>
+        <span
+          className="sub-nav-item active"
+          onClick={() => setCurrentTab(auth.role === "PUBLIC" ? "landing" : auth.role === "STUDENT" ? "student-dashboard" : auth.role === "AICTE_VERIFIER" ? "stakeholder-dashboard" : "dashboard")}
+        >
           <Building size={13} /> Dashboard
         </span>
         <span className="sub-nav-item" onClick={() => setCurrentTab("explorer")}>
