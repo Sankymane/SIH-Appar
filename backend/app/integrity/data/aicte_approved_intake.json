@@ -1,0 +1,41 @@
+[
+  {
+    "institution_id": "AICTE-1-10992384",
+    "institution_name": "Apex Institute of Engineering & Technology, Pune",
+    "program_code": "BTECH-CSE",
+    "academic_year": "2026-2027",
+    "approved_intake": 10,
+    "max_tfw_pct": 0.05,
+    "max_ews_pct": 0.1,
+    "max_lateral_pct": 0.1,
+    "max_pmsss_seats": 2,
+    "max_nri_pct": 0.15,
+    "vacant_prior_year_seats": 0
+  },
+  {
+    "institution_id": "AICTE-1-10992384",
+    "institution_name": "Apex Institute of Engineering & Technology, Pune",
+    "program_code": "BTECH-ECE",
+    "academic_year": "2026-2027",
+    "approved_intake": 5,
+    "max_tfw_pct": 0.05,
+    "max_ews_pct": 0.1,
+    "max_lateral_pct": 0.1,
+    "max_pmsss_seats": 2,
+    "max_nri_pct": 0.15,
+    "vacant_prior_year_seats": 0
+  },
+  {
+    "institution_id": "AICTE-1-20485911",
+    "institution_name": "National Institute of Technology, Trichy",
+    "program_code": "BTECH-MECH",
+    "academic_year": "2026-2027",
+    "approved_intake": 60,
+    "max_tfw_pct": 0.05,
+    "max_ews_pct": 0.1,
+    "max_lateral_pct": 0.1,
+    "max_pmsss_seats": 2,
+    "max_nri_pct": 0.15,
+    "vacant_prior_year_seats": 0
+  }
+]

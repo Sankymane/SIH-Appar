@@ -1,0 +1,380 @@
+{
+  "910010001012": {
+    "apaar_id": "910010001012",
+    "full_name": "Aarav Sharma",
+    "dob": "2007-03-15",
+    "gender": "M",
+    "status": "ACTIVE",
+    "aadhaar_linked": true,
+    "existing_enrollments": []
+  },
+  "910010001020": {
+    "apaar_id": "910010001020",
+    "full_name": "Ananya Patel",
+    "dob": "2007-06-22",
+    "gender": "F",
+    "status": "ACTIVE",
+    "aadhaar_linked": true,
+    "existing_enrollments": []
+  },
+  "910010001031": {
+    "apaar_id": "910010001031",
+    "full_name": "Rohan Deshmukh",
+    "dob": "2006-11-10",
+    "gender": "M",
+    "status": "ACTIVE",
+    "aadhaar_linked": true,
+    "existing_enrollments": []
+  },
+  "910010001049": {
+    "apaar_id": "910010001049",
+    "full_name": "Sneha Kulkarni",
+    "dob": "2007-01-05",
+    "gender": "F",
+    "status": "ACTIVE",
+    "aadhaar_linked": true,
+    "existing_enrollments": []
+  },
+  "910010001054": {
+    "apaar_id": "910010001054",
+    "full_name": "Aditya Verma",
+    "dob": "2006-08-19",
+    "gender": "M",
+    "status": "ACTIVE",
+    "aadhaar_linked": true,
+    "existing_enrollments": []
+  },
+  "910010001065": {
+    "apaar_id": "910010001065",
+    "full_name": "Pooja Iyer",
+    "dob": "2007-04-12",
+    "gender": "F",
+    "status": "ACTIVE",
+    "aadhaar_linked": true,
+    "existing_enrollments": []
+  },
+  "910010001077": {
+    "apaar_id": "910010001077",
+    "full_name": "Vikram Singh",
+    "dob": "2006-09-28",
+    "gender": "M",
+    "status": "ACTIVE",
+    "aadhaar_linked": true,
+    "existing_enrollments": []
+  },
+  "910010001083": {
+    "apaar_id": "910010001083",
+    "full_name": "Neha Gupta",
+    "dob": "2007-07-14",
+    "gender": "F",
+    "status": "ACTIVE",
+    "aadhaar_linked": true,
+    "existing_enrollments": []
+  },
+  "910010001096": {
+    "apaar_id": "910010001096",
+    "full_name": "Rahul Nair",
+    "dob": "2006-12-01",
+    "gender": "M",
+    "status": "ACTIVE",
+    "aadhaar_linked": true,
+    "existing_enrollments": []
+  },
+  "910010001106": {
+    "apaar_id": "910010001106",
+    "full_name": "Tanvi Joshi",
+    "dob": "2007-05-30",
+    "gender": "F",
+    "status": "ACTIVE",
+    "aadhaar_linked": true,
+    "existing_enrollments": []
+  },
+  "910010001110": {
+    "apaar_id": "910010001110",
+    "full_name": "Karan Mehta",
+    "dob": "2006-05-18",
+    "gender": "M",
+    "status": "ACTIVE",
+    "aadhaar_linked": true,
+    "existing_enrollments": []
+  },
+  "910010001123": {
+    "apaar_id": "910010001123",
+    "full_name": "Simran Kaur",
+    "dob": "2007-02-14",
+    "gender": "F",
+    "status": "ACTIVE",
+    "aadhaar_linked": true,
+    "existing_enrollments": []
+  },
+  "910010001134": {
+    "apaar_id": "910010001134",
+    "full_name": "Manoj Waghmare",
+    "dob": "2006-10-04",
+    "gender": "M",
+    "status": "ACTIVE",
+    "aadhaar_linked": true,
+    "existing_enrollments": []
+  },
+  "910010001147": {
+    "apaar_id": "910010001147",
+    "full_name": "Priya Shinde",
+    "dob": "2007-04-18",
+    "gender": "F",
+    "status": "ACTIVE",
+    "aadhaar_linked": true,
+    "existing_enrollments": []
+  },
+  "910010001152": {
+    "apaar_id": "910010001152",
+    "full_name": "Siddharth Gaikwad",
+    "dob": "2006-07-09",
+    "gender": "M",
+    "status": "ACTIVE",
+    "aadhaar_linked": true,
+    "existing_enrollments": []
+  },
+  "910010001168": {
+    "apaar_id": "910010001168",
+    "full_name": "Devendra Rane",
+    "dob": "2006-03-21",
+    "gender": "M",
+    "status": "ACTIVE",
+    "aadhaar_linked": true,
+    "existing_enrollments": []
+  },
+  "910010001175": {
+    "apaar_id": "910010001175",
+    "full_name": "Ashutosh Kulkarni",
+    "dob": "2007-02-11",
+    "gender": "M",
+    "status": "ACTIVE",
+    "aadhaar_linked": true,
+    "existing_enrollments": []
+  },
+  "910010001181": {
+    "apaar_id": "910010001181",
+    "full_name": "Mayur Sonawane",
+    "dob": "2006-08-14",
+    "gender": "M",
+    "status": "ACTIVE",
+    "aadhaar_linked": true,
+    "existing_enrollments": []
+  },
+  "910010001201": {
+    "apaar_id": "910010001201",
+    "full_name": "Harsh Vardhan",
+    "dob": "2006-09-12",
+    "gender": "M",
+    "status": "DEACTIVATED",
+    "aadhaar_linked": true,
+    "existing_enrollments": []
+  },
+  "910010001217": {
+    "apaar_id": "910010001217",
+    "full_name": "Vikas Dubey",
+    "dob": "2005-12-04",
+    "gender": "M",
+    "status": "FLAGGED_FRAUD",
+    "aadhaar_linked": true,
+    "existing_enrollments": []
+  },
+  "910010001229": {
+    "apaar_id": "910010001229",
+    "full_name": "Vikramaditya Rathore",
+    "dob": "2007-03-10",
+    "gender": "M",
+    "status": "ACTIVE",
+    "aadhaar_linked": true,
+    "existing_enrollments": []
+  },
+  "910010001238": {
+    "apaar_id": "910010001238",
+    "full_name": "Kavita Pillai",
+    "dob": "2005-11-20",
+    "gender": "F",
+    "status": "ACTIVE",
+    "aadhaar_linked": true,
+    "existing_enrollments": []
+  },
+  "910010001240": {
+    "apaar_id": "910010001240",
+    "full_name": "Karthik Subramanian",
+    "dob": "2006-04-15",
+    "gender": "M",
+    "status": "ACTIVE",
+    "aadhaar_linked": true,
+    "existing_enrollments": [
+      {
+        "institution_id": "AICTE-1-20485911",
+        "institution_name": "National Institute of Technology, Trichy",
+        "program_code": "BTECH-MECH",
+        "academic_year": "2026-2027",
+        "status": "ACTIVE",
+        "mode": "REGULAR_FULLTIME"
+      }
+    ]
+  },
+  "910010001255": {
+    "apaar_id": "910010001255",
+    "full_name": "Rameshwar Gite",
+    "dob": "2006-12-19",
+    "gender": "M",
+    "status": "ACTIVE",
+    "aadhaar_linked": true,
+    "existing_enrollments": []
+  },
+  "910010001272": {
+    "apaar_id": "910010001272",
+    "full_name": "Deepak Kumar",
+    "dob": "2006-02-17",
+    "gender": "M",
+    "status": "ACTIVE",
+    "aadhaar_linked": true,
+    "existing_enrollments": []
+  },
+  "910010001286": {
+    "apaar_id": "910010001286",
+    "full_name": "Rishi Kant",
+    "dob": "2006-06-25",
+    "gender": "M",
+    "status": "ACTIVE",
+    "aadhaar_linked": true,
+    "existing_enrollments": []
+  },
+  "910010001293": {
+    "apaar_id": "910010001293",
+    "full_name": "Pankaj Kumar",
+    "dob": "2006-10-14",
+    "gender": "M",
+    "status": "ACTIVE",
+    "aadhaar_linked": true,
+    "existing_enrollments": []
+  },
+  "910010001303": {
+    "apaar_id": "910010001303",
+    "full_name": "Kuldeep Singhania",
+    "dob": "2006-07-29",
+    "gender": "M",
+    "status": "ACTIVE",
+    "aadhaar_linked": true,
+    "existing_enrollments": []
+  },
+  "910010001319": {
+    "apaar_id": "910010001319",
+    "full_name": "Gauri Shinde",
+    "dob": "2007-01-18",
+    "gender": "F",
+    "status": "ACTIVE",
+    "aadhaar_linked": true,
+    "existing_enrollments": []
+  },
+  "910010001326": {
+    "apaar_id": "910010001326",
+    "full_name": "Pranav Dixit",
+    "dob": "2006-11-23",
+    "gender": "M",
+    "status": "ACTIVE",
+    "aadhaar_linked": true,
+    "existing_enrollments": []
+  },
+  "910010001335": {
+    "apaar_id": "910010001335",
+    "full_name": "Meera Nair",
+    "dob": "2007-03-08",
+    "gender": "F",
+    "status": "ACTIVE",
+    "aadhaar_linked": true,
+    "existing_enrollments": []
+  },
+  "910010001342": {
+    "apaar_id": "910010001342",
+    "full_name": "Chetan Bhagat",
+    "dob": "2006-09-17",
+    "gender": "M",
+    "status": "ACTIVE",
+    "aadhaar_linked": true,
+    "existing_enrollments": []
+  },
+  "910010001357": {
+    "apaar_id": "910010001357",
+    "full_name": "Disha Rao",
+    "dob": "2007-05-12",
+    "gender": "F",
+    "status": "ACTIVE",
+    "aadhaar_linked": true,
+    "existing_enrollments": []
+  },
+  "778899001122": {
+    "apaar_id": "778899001122",
+    "full_name": "Manish V. Pandey",
+    "dob": "2005-03-25",
+    "gender": "M",
+    "status": "ACTIVE",
+    "aadhaar_linked": true,
+    "existing_enrollments": []
+  },
+  "889911223344": {
+    "apaar_id": "889911223344",
+    "full_name": "Karan G. Malhotra",
+    "dob": "2005-01-10",
+    "gender": "M",
+    "status": "ACTIVE",
+    "aadhaar_linked": true,
+    "existing_enrollments": []
+  },
+  "910010002001": {
+    "apaar_id": "910010002001",
+    "full_name": "Sankalp Mane",
+    "dob": "2006-02-14",
+    "gender": "M",
+    "status": "ACTIVE",
+    "aadhaar_linked": true,
+    "existing_enrollments": []
+  },
+  "910010002012": {
+    "apaar_id": "910010002012",
+    "full_name": "Kavish Patil",
+    "dob": "2006-07-09",
+    "gender": "M",
+    "status": "ACTIVE",
+    "aadhaar_linked": true,
+    "existing_enrollments": []
+  },
+  "910010002023": {
+    "apaar_id": "910010002023",
+    "full_name": "Sarra Khadse",
+    "dob": "2006-11-30",
+    "gender": "F",
+    "status": "ACTIVE",
+    "aadhaar_linked": true,
+    "existing_enrollments": []
+  },
+  "910010002034": {
+    "apaar_id": "910010002034",
+    "full_name": "Arth Sinha",
+    "dob": "2006-05-21",
+    "gender": "M",
+    "status": "ACTIVE",
+    "aadhaar_linked": true,
+    "existing_enrollments": []
+  },
+  "910010002045": {
+    "apaar_id": "910010002045",
+    "full_name": "Sakshi Shetty",
+    "dob": "2006-09-03",
+    "gender": "F",
+    "status": "ACTIVE",
+    "aadhaar_linked": true,
+    "existing_enrollments": []
+  },
+  "910010002056": {
+    "apaar_id": "910010002056",
+    "full_name": "Riddhi Samanta",
+    "dob": "2006-12-17",
+    "gender": "F",
+    "status": "ACTIVE",
+    "aadhaar_linked": true,
+    "existing_enrollments": []
+  }
+}
