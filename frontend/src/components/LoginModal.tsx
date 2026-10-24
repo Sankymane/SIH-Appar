@@ -287,7 +287,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
 
               {/* The ONLY authentication element */}
               <div style={{ display: "flex", justifyContent: "center", margin: "16px 0" }}>
-                <SignInButton onVerified={handlePhoneEmailVerified} />
+                <SignInButton clientId="11374656146720138530" onVerified={handlePhoneEmailVerified} />
               </div>
             </div>
           )}
@@ -390,7 +390,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
 
               {/* The ONLY authentication element */}
               <div style={{ display: "flex", justifyContent: "center", margin: "16px 0" }}>
-                <SignInButton onVerified={handlePhoneEmailVerified} />
+                <SignInButton clientId="11374656146720138530" onVerified={handlePhoneEmailVerified} />
               </div>
             </div>
           )}
@@ -423,7 +423,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
 
               {/* The ONLY authentication element */}
               <div style={{ display: "flex", justifyContent: "center", margin: "16px 0" }}>
-                <SignInButton onVerified={handlePhoneEmailVerified} />
+                <SignInButton clientId="11374656146720138530" onVerified={handlePhoneEmailVerified} />
               </div>
             </div>
           )}
