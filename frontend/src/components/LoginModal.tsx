@@ -96,7 +96,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
   if (!isOpen) return null;
 
   // STRICT AUTHENTICATION FLOW: ONLY triggered by window.phoneEmailListener
-  const handlePhoneEmailVerified = async (userJsonUrl: string) => {
+  const handlePhoneEmailVerified = async (userJsonUrl: string, verifiedPhone?: string) => {
     setLoading(true);
     setErrorMsg("");
     try {
@@ -110,7 +110,8 @@ export const LoginModal: React.FC<LoginModalProps> = ({
       const res = await verifyPhoneEmail(
         userJsonUrl,
         loginMode === "STUDENT" ? "STUDENT" : loginMode === "STAKEHOLDER" ? "AICTE_VERIFIER" : "INSTITUTE_ADMIN",
-        identifier
+        identifier,
+        verifiedPhone
       );
 
       localStorage.setItem("aicte_token", res.access_token);

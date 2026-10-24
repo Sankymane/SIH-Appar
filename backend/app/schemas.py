@@ -222,6 +222,7 @@ class PhoneEmailVerifyRequest(BaseModel):
     user_json_url: str
     role: str = "STUDENT"  # STUDENT, INSTITUTE_ADMIN, AICTE_VERIFIER
     identifier: Optional[str] = None  # Optional identifier if supplied by frontend
+    phone_number: Optional[str] = None  # Optional directly verified phone number from widget/JWT
 
 class AuthTokenResponse(BaseModel):
     access_token: str
