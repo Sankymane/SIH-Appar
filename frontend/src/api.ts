@@ -22,7 +22,16 @@ import {
   MOCK_AUDIT
 } from "./mockData";
 
-const API_BASE = import.meta.env.VITE_API_BASE || "/api/v1";
+// Dynamically resolve API base URL from Vite environment variables (Vercel/Render production or local dev)
+export const RAW_BASE_URL = (
+  import.meta.env.VITE_API_BASE_URL ||
+  import.meta.env.VITE_API_BASE ||
+  "http://localhost:8000"
+).replace(/\/+$/, "");
+
+export const API_BASE = RAW_BASE_URL.endsWith("/api/v1")
+  ? RAW_BASE_URL
+  : `${RAW_BASE_URL}/api/v1`;
 
 function getAuthHeader(): Record<string, string> {
   const token = localStorage.getItem("aicte_token");
