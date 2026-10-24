@@ -53,6 +53,7 @@ class CollegeDetailSchema(BaseModel):
     nodal_officer_name: Optional[str] = None
     nodal_officer_email: Optional[str] = None
     nodal_officer_mobile: Optional[str] = None
+    registered_phone: Optional[str] = None
     total_approved_intake: int = 0
     total_enrolled_students: int = 0
     total_supernumerary_enrolled: int = 0
@@ -122,6 +123,8 @@ class StudentOutSchema(BaseModel):
     validation_remarks: Optional[str] = None
     verification_hash: Optional[str] = None
     is_verified: bool
+    credits_earned: Optional[int] = 84
+    cgpa: Optional[float] = 8.85
     created_at: Optional[datetime] = None
 
     class Config:
@@ -156,7 +159,35 @@ class VerificationResponseSchema(BaseModel):
     verified_at: Optional[str] = None
 
 # ---------------------------------------------------------------------------
-# Auth & Login (3-Step Workflow)
+# Student Discrepancy Remarks
+# ---------------------------------------------------------------------------
+class StudentRemarkCreate(BaseModel):
+    remark_type: str
+    description: str
+    contact_email: Optional[str] = None
+    contact_mobile: Optional[str] = None
+
+class StudentRemarkOut(BaseModel):
+    id: int
+    student_id: Optional[int] = None
+    apaar_id: str
+    student_name: str
+    aicte_id: str
+    college_name: Optional[str] = None
+    remark_type: str
+    description: str
+    status: str
+    contact_email: Optional[str] = None
+    contact_mobile: Optional[str] = None
+    admin_notes: Optional[str] = None
+    created_at: datetime
+    resolved_at: Optional[datetime] = None
+
+    class Config:
+        from_attributes = True
+
+# ---------------------------------------------------------------------------
+# Auth & Login (Student, Institute, Stakeholder)
 # ---------------------------------------------------------------------------
 class InstituteSearchItem(BaseModel):
     aicte_id: str
@@ -164,8 +195,19 @@ class InstituteSearchItem(BaseModel):
     district: Optional[str] = None
     state: Optional[str] = None
 
-class LoginStep1Select(BaseModel):
+class StudentLoginRequest(BaseModel):
+    apaar_id: str
+
+class StudentLoginOTPVerify(BaseModel):
+    apaar_id: str
+    otp: str
+    session_token: str
+
+class InstituteLoginRequest(BaseModel):
     aicte_id: str
+
+class RegulatorLoginRequest(BaseModel):
+    officer_id: Optional[str] = "AICTE-REG-01"
 
 class LoginStep2Password(BaseModel):
     aicte_id: str
@@ -176,12 +218,103 @@ class LoginStep3OTP(BaseModel):
     otp: str
     session_token: str
 
+class PhoneEmailVerifyRequest(BaseModel):
+    user_json_url: str
+    role: str = "STUDENT"  # STUDENT, INSTITUTE_ADMIN, AICTE_VERIFIER
+    identifier: Optional[str] = None  # Optional identifier if supplied by frontend
+
 class AuthTokenResponse(BaseModel):
     access_token: str
     token_type: str = "bearer"
     aicte_id: str
     college_name: str
-    role: str  # INSTITUTE_ADMIN or AICTE_VERIFIER
+    role: str  # STUDENT, INSTITUTE_ADMIN, AICTE_VERIFIER
+    apaar_id: Optional[str] = None
+    student_name: Optional[str] = None
+
+# ---------------------------------------------------------------------------
+# Stakeholder Management & Secondary OTP Schemas
+# ---------------------------------------------------------------------------
+class SecondaryOTPRequest(BaseModel):
+    action: str  # ADD_COLLEGE, REMOVE_COLLEGE
+    target_id: Optional[str] = None
+
+class AddCollegeRequest(BaseModel):
+    aicte_id: str
+    name: str
+    address: Optional[str] = None
+    district: str
+    state: str = "Maharashtra"
+    institution_type: str = "Private-Self Financing"
+    total_approved_intake: int = 120
+    programs: Optional[str] = "Engineering and Technology"
+    secondary_otp: str
+    session_token: str
+
+class RemoveCollegeRequest(BaseModel):
+    aicte_id: str
+    secondary_otp: str
+    session_token: str
+    reason: Optional[str] = "AICTE Regulatory Action"
+
+class StakeholderDirectoryItem(BaseModel):
+    aicte_id: str
+    name: str
+    district: str
+    state: str
+    institution_type: str
+    nodal_officer_name: str
+    nodal_officer_email: str
+    registered_phone: Optional[str] = None
+    is_active: bool = True
+    total_approved_intake: int = 0
+    total_enrolled: int = 0
+    compliance_status: str = "COMPLIANT"
+
+class StakeholderAlertItem(BaseModel):
+    id: str
+    alert_type: str  # INTAKE_EXCEEDED, CROSS_INSTITUTION_CONFLICT, DUPLICATE_APAAR, MISSING_APAAR, FORECAST_SURGE_WARNING
+    severity: str  # CRITICAL, WARNING, INFO
+    title: str
+    aicte_id: str
+    college_name: str
+    department: Optional[str] = None
+    details: str
+    count: int = 1
+    action_url: Optional[str] = None
+
+# ---------------------------------------------------------------------------
+# Forecasting & Time Series Models (Inspired by trinity652/DocAuth & Prophet)
+# ---------------------------------------------------------------------------
+class TimeSeriesDataPoint(BaseModel):
+    year: str
+    year_int: int
+    month: Optional[int] = 8
+    approved_intake: int
+    actual_enrolment: int
+    trend: float
+    seasonal: float
+    residual: float
+    growth_rate_pct: float
+
+class ForecastingResult(BaseModel):
+    grouping_key: str  # e.g., "Engineering and Technology x Maharashtra x Private-Self Financing"
+    programme: str
+    state: str
+    institution_type: str
+    aicte_id: Optional[str] = None
+    college_name: Optional[str] = None
+    current_approved_intake: int
+    historical_points: List[TimeSeriesDataPoint]
+    projected_year: str = "2027-2028"
+    projected_intake_p50: int  # Expected projection
+    projected_intake_p10: int  # 10th percentile
+    projected_intake_p90: int  # 90th percentile
+    projected_overflow_pct: float
+    is_critical_overflow: bool  # True if projected >= 30% above approved capacity
+    alert_message: Optional[str] = None
+    seasonal_admission_peak_month: str = "August"
+    recommended_action: str
 
 # ---------------------------------------------------------------------------
 # Audit & Analytics Schemas

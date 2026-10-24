@@ -5,6 +5,8 @@ import tailwindcss from '@tailwindcss/vite'
 // The FastAPI backend runs on port 8000 (see ../start.sh). In development, Vite
 // forwards /api calls to it so the browser sees one origin.
 export default defineConfig({
+  // Relative asset paths, so the build also works on GitHub Pages under /SIH-Appar/
+  base: './',
   plugins: [react(), tailwindcss()],
   server: {
     port: 5173,

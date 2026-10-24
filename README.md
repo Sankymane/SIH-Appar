@@ -1,6 +1,10 @@
 # AICTE-APAAR: Student Data Management & Verification Platform
 ### Solution for SIH Problem Statement 26263
 
+> 🌐 **Live GitHub Pages URL**: **[https://sankymane.github.io/SIH-Appar/](https://sankymane.github.io/SIH-Appar/)**
+> 
+> *The interactive frontend is deployed live on GitHub Pages with complete AICTE portal styling, real scraped institutions dataset, sample student records, capacity verification drawers, and automated compliance auditing.*
+
 A full-stack, enterprise-grade web application developed to solve **SIH Problem Statement 26263**: *"Development of an APAAR ID-Based Student Data Management and Verification Platform for AICTE-Approved Institutions"*.
 
 The platform integrates the **Automated Permanent Academic Account Registry (APAAR)** 12-digit identifier into the official AICTE institutional data pipeline, enforcing automated policy validation, preventing duplicate admissions across India, safeguarding approved intake capacities, and generating verifiable digital academic records and certificates.

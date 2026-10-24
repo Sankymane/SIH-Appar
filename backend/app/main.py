@@ -11,7 +11,9 @@ from .routes import (
     verification,
     analytics,
     reports,
-    audit
+    audit,
+    student_routes,
+    stakeholder_routes
 )
 
 # Initialize database schema
@@ -20,7 +22,7 @@ Base.metadata.create_all(bind=engine)
 app = FastAPI(
     title="AICTE-APAAR National Student Data Management & Verification API",
     description="Full-Stack Backend System solving SIH Problem Statement 26263: Automated Permanent Academic Account Registry (APAAR) Integration for AICTE-Approved Institutions.",
-    version="1.0.0",
+    version="2.0.0",
     docs_url="/docs",
     redoc_url="/redoc"
 )
@@ -34,7 +36,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Auto-seed database with AICTE colleges and synthetic edge-case student records on startup
+# Auto-seed database with AICTE colleges, Sankalp Mane ABC record, and synthetic edge-case student records on startup
 @app.on_event("startup")
 def on_startup():
     try:
@@ -44,6 +46,8 @@ def on_startup():
 
 # Register API Routers under /api/v1
 app.include_router(auth_routes.router, prefix="/api/v1")
+app.include_router(student_routes.router, prefix="/api/v1")
+app.include_router(stakeholder_routes.router, prefix="/api/v1")
 app.include_router(institutions.router, prefix="/api/v1")
 app.include_router(students.router, prefix="/api/v1")
 app.include_router(verification.router, prefix="/api/v1")
@@ -53,7 +57,7 @@ app.include_router(audit.router, prefix="/api/v1")
 
 @app.get("/health")
 def health_check():
-    return {"status": "healthy", "service": "aicte-apaar-backend"}
+    return {"status": "healthy", "service": "aicte-apaar-backend", "version": "2.0.0"}
 
 # Mount frontend production build if available
 FRONTEND_DIST = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), "frontend", "dist")
@@ -65,7 +69,7 @@ else:
         return {
             "platform": "AICTE-APAAR Student Data Management & Verification Platform",
             "status": "online",
-            "version": "1.0.0",
+            "version": "2.0.0",
             "problem_statement": "SIH 26263",
             "documentation": "/docs"
         }

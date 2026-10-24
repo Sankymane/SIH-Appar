@@ -4,7 +4,7 @@ import pandas as pd
 from datetime import datetime, timezone
 from sqlalchemy.orm import Session
 from .database import engine, SessionLocal, Base
-from .models import College, CourseIntake, Student, AuditLog
+from .models import College, CourseIntake, Student, StudentRemark, AuditLog
 from .validation_engine import ValidationEngine
 
 # Realistic Indian student data generation pools
@@ -55,6 +55,75 @@ def seed_database(max_colleges: int = 150):
         college_count = db.query(College).count()
         if college_count > 0:
             print(f"Database already seeded with {college_count} colleges and {db.query(Student).count()} students.")
+            # Ensure all colleges have phone 8767434172
+            db.query(College).update({
+                College.nodal_officer_mobile: "+91 8767434172",
+                College.registered_phone: "+91 8767434172",
+                College.contact_phone: "+91 8767434172"
+            })
+            db.commit()
+
+            # Ensure Sankalp Hemant Mane (from user's attached DigiLocker ABC Card) exists
+            sankalp = db.query(Student).filter(Student.apaar_id == "126430259751").first()
+            primary_college = db.query(College).first()
+            if not sankalp and primary_college:
+                cs_course = db.query(CourseIntake).filter(CourseIntake.aicte_id == primary_college.aicte_id).first()
+                sankalp_student = Student(
+                    apaar_id="126430259751",
+                    enrollment_no="EN26CS1264",
+                    full_name="SANKALP HEMANT MANE",
+                    gender="Male",
+                    category="General",
+                    date_of_birth="2004-06-18",
+                    date_of_admission="2026-08-01",
+                    academic_year="2026-2027",
+                    credits_earned=84,
+                    cgpa=8.92,
+                    aicte_id=primary_college.aicte_id,
+                    course_id=cs_course.id if cs_course else None,
+                    program="Engineering and Technology",
+                    department="Computer Science and Engineering",
+                    level="UG",
+                    admission_type="Regular",
+                    validation_status="VALID",
+                    validation_remarks="All checks passed. Verified against National Academic Bank of Credits (ABC).",
+                    verification_hash="sha256:d8b2e176430259751e041fa89c0281b37651e43c",
+                    is_verified=True,
+                    verified_by="Academic Bank of Credits (ABC) & AICTE Trust Network"
+                )
+                db.add(sankalp_student)
+                db.commit()
+                print("Seeded Sankalp Hemant Mane (APAAR 126430259751).")
+
+            # Seed sample discrepancy remarks
+            if db.query(StudentRemark).count() == 0:
+                sample_remarks = [
+                    StudentRemark(
+                        apaar_id="126430259751",
+                        student_name="SANKALP HEMANT MANE",
+                        aicte_id=primary_college.aicte_id if primary_college else "1-44525213207",
+                        remark_type="Inaccurate Personal Details",
+                        description="Date of birth was entered as 2004-06-18 instead of official Class X certificate date. Requesting sync with DigiLocker.",
+                        status="RESOLVED",
+                        contact_email="sankalp.mane@abc.gov.in",
+                        contact_mobile="8767434172",
+                        admin_notes="Synced with DigiLocker Aadhaar e-KYC record on 24-Oct-2026.",
+                        resolved_at=datetime.now(timezone.utc)
+                    ),
+                    StudentRemark(
+                        apaar_id="778899001122",
+                        student_name="Manish V. Pandey",
+                        aicte_id="1-46208965893",
+                        remark_type="Wrong College Mapping",
+                        description="System shows I am also enrolled at Dr. D. Y. Patil Technical Campus, but I cancelled my admission there during CAP Round 2.",
+                        status="PENDING",
+                        contact_email="manish.pandey@gmail.com",
+                        contact_mobile="8767434172"
+                    )
+                ]
+                db.bulk_save_objects(sample_remarks)
+                db.commit()
+                print("Seeded sample student remarks.")
             return
 
         print("Seeding database from AICTE_Approved_Colleges_Master.xlsx...")
@@ -428,6 +497,66 @@ def seed_database(max_colleges: int = 150):
         db.bulk_save_objects(students_to_create)
         db.commit()
         print(f"Created {len(students_to_create)} synthetic student records (including all edge cases).")
+
+        # Seed Sankalp Hemant Mane (APAAR 126430259751) with DigiLocker ABC Card
+        primary_c = primary_colleges[0]
+        cs_c = db.query(CourseIntake).filter(CourseIntake.aicte_id == primary_c.aicte_id).first()
+        sankalp_student = Student(
+            apaar_id="126430259751",
+            enrollment_no="EN26CS1264",
+            full_name="SANKALP HEMANT MANE",
+            gender="Male",
+            category="General",
+            date_of_birth="2004-06-18",
+            date_of_admission="2026-08-01",
+            academic_year="2026-2027",
+            mobile_number="8767434172",
+            credits_earned=84,
+            cgpa=8.92,
+            aicte_id=primary_c.aicte_id,
+            course_id=cs_c.id if cs_c else None,
+            program="Engineering and Technology",
+            department="Computer Science and Engineering",
+            level="UG",
+            admission_type="Regular",
+            validation_status="VALID",
+            validation_remarks="All checks passed. Cryptographically verified against National Academic Bank of Credits (ABC).",
+            verification_hash="sha256:d8b2e176430259751e041fa89c0281b37651e43c",
+            is_verified=True,
+            verified_by="Academic Bank of Credits (ABC) & AICTE Trust Network"
+        )
+        db.add(sankalp_student)
+        db.commit()
+        print("Seeded Sankalp Hemant Mane (APAAR 126430259751).")
+
+        # Seed sample discrepancy remarks
+        sample_remarks = [
+            StudentRemark(
+                apaar_id="126430259751",
+                student_name="SANKALP HEMANT MANE",
+                aicte_id=primary_c.aicte_id,
+                remark_type="Inaccurate Personal Details",
+                description="Date of birth was entered as 2004-06-18 instead of official Class X certificate date. Requesting sync with DigiLocker.",
+                status="RESOLVED",
+                contact_email="sankalp.mane@abc.gov.in",
+                contact_mobile="8767434172",
+                admin_notes="Synced with DigiLocker Aadhaar e-KYC record on 24-Oct-2026.",
+                resolved_at=datetime.now(timezone.utc)
+            ),
+            StudentRemark(
+                apaar_id="778899001122",
+                student_name="Manish V. Pandey",
+                aicte_id="1-46208965893",
+                remark_type="Wrong College Mapping",
+                description="System shows I am also enrolled at Dr. D. Y. Patil Technical Campus, but I cancelled my admission there during CAP Round 2.",
+                status="PENDING",
+                contact_email="manish.pandey@gmail.com",
+                contact_mobile="8767434172"
+            )
+        ]
+        db.bulk_save_objects(sample_remarks)
+        db.commit()
+        print("Seeded sample student remarks.")
 
         # Initial Audit Log entries
         audit_entries = [
