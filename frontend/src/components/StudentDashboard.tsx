@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import { StudentProfile, StudentRemark, UserAuthContext } from "../types";
 import { fetchStudentProfile, submitStudentRemark, fetchStudentRemarks } from "../api";
+import abcCardImg from "../assets/sankalp_abc_card.png";
 
 interface StudentDashboardProps {
   auth: UserAuthContext;
@@ -231,7 +232,7 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ auth }) => {
                 }}
               >
                 <img
-                  src="/sankalp_abc_card.png"
+                  src={abcCardImg}
                   alt="Student DigiLocker Photograph"
                   style={{
                     width: "100%",
