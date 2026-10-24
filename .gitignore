@@ -37,3 +37,8 @@ share/python-wheels/
 .Trashes
 ehthumbs.db
 Thumbs.db
+*.db
+backend/aicte_apaar.db
+frontend/node_modules/
+frontend/dist/
+
