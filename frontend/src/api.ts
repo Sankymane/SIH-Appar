@@ -405,7 +405,8 @@ export async function verifyPhoneEmail(
   user_json_url: string,
   role: string,
   identifier?: string,
-  verified_phone?: string
+  verified_phone?: string,
+  college_name?: string
 ) {
   // Pre-resolve clean 10-digit phone candidate if known from widget / JWT / URL
   let clean10 = "";
@@ -434,7 +435,8 @@ export async function verifyPhoneEmail(
         user_json_url,
         role,
         identifier,
-        phone_number: clean10 || verified_phone
+        phone_number: clean10 || verified_phone,
+        college_name: college_name || undefined
       }),
     });
     if (res.ok) {
@@ -508,14 +510,14 @@ export async function verifyPhoneEmail(
       throw new Error("Unauthorized: Insufficient Permissions");
     }
 
-    const matchedCol = identifier ? MOCK_COLLEGES.find(c => c.aicte_id === identifier) : MOCK_COLLEGES[0];
+    const matchedCol = identifier ? MOCK_COLLEGES.find(c => c.aicte_id === identifier) : null;
     const resolvedName = role === "AICTE_VERIFIER"
       ? "AICTE Central Regulatory Bureau"
-      : (matchedCol ? matchedCol.name : "JAWAHARLAL NEHRU RAJKEEYA MAHAVIDYALAYA");
+      : (college_name || (matchedCol ? matchedCol.name : (identifier ? `AICTE Institution (${identifier})` : "JAWAHARLAL NEHRU RAJKEEYA MAHAVIDYALAYA")));
     const resolvedId = identifier || (role === "AICTE_VERIFIER" ? "AICTE-CENTRAL" : (matchedCol ? matchedCol.aicte_id : "1-44465113304"));
 
     return {
-      access_token: `auth_token_${clean10 || "authorized"}`,
+      access_token: `auth_token_${clean10 || "authorized"}_${resolvedId}`,
       token_type: "bearer",
       aicte_id: resolvedId,
       college_name: resolvedName,
@@ -577,12 +579,12 @@ export async function verifyPhoneEmail(
     );
   }
 
-  const defaultCol = identifier ? MOCK_COLLEGES.find(c => c.aicte_id === identifier) : MOCK_COLLEGES[0];
+  const defaultCol = identifier ? MOCK_COLLEGES.find(c => c.aicte_id === identifier) : null;
   return {
     access_token: "auth_token_preview",
     token_type: "bearer",
     aicte_id: identifier || (defaultCol ? defaultCol.aicte_id : "1-44465113304"),
-    college_name: defaultCol ? defaultCol.name : "JAWAHARLAL NEHRU RAJKEEYA MAHAVIDYALAYA",
+    college_name: college_name || (defaultCol ? defaultCol.name : "JAWAHARLAL NEHRU RAJKEEYA MAHAVIDYALAYA"),
     role: role,
     apaar_id: null,
     student_name: null
@@ -754,6 +756,19 @@ export async function fetchStudents(params: {
     return data;
   } catch {
     const localEnrolled: Student[] = JSON.parse(localStorage.getItem("aicte_enrolled_students") || "[]");
+    let activeAicteId = params.aicte_id || "1-44465113304";
+    let activeCollegeName = "JAWAHARLAL NEHRU RAJKEEYA MAHAVIDYALAYA";
+    try {
+      const authCtx = JSON.parse(localStorage.getItem("aicte_auth_context") || "{}");
+      if (authCtx.aicte_id) activeAicteId = authCtx.aicte_id;
+      if (authCtx.college_name) activeCollegeName = authCtx.college_name;
+    } catch {}
+    if (params.aicte_id) {
+      activeAicteId = params.aicte_id;
+      const matched = MOCK_COLLEGES.find(c => c.aicte_id === params.aicte_id);
+      if (matched) activeCollegeName = matched.name;
+    }
+
     const defaultStudents: Student[] = [
       {
         id: 1,
@@ -765,8 +780,8 @@ export async function fetchStudents(params: {
         category: "General",
         date_of_admission: "2026-08-01",
         academic_year: "2026-2027",
-        aicte_id: "1-44465113304",
-        college_name: "JAWAHARLAL NEHRU RAJKEEYA MAHAVIDYALAYA",
+        aicte_id: activeAicteId,
+        college_name: activeCollegeName,
         program: "Engineering and Technology",
         department: "Computer Science and Engineering",
         level: "UG",

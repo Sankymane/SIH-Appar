@@ -51,18 +51,7 @@ export default function App() {
       }
     } catch {}
 
-    const token = localStorage.getItem("aicte_token");
-    if (token) {
-      setAuth({
-        token,
-        aicte_id: "1-44465113304",
-        college_name: "JAWAHARLAL NEHRU RAJKEEYA MAHAVIDYALAYA",
-        role: "INSTITUTE_ADMIN",
-      });
-      setCurrentTab("dashboard");
-    } else {
-      setCurrentTab("landing");
-    }
+    setCurrentTab("landing");
   }, []);
 
   const handleLogout = () => {

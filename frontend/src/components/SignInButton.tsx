@@ -19,6 +19,11 @@ export const SignInButton: React.FC<SignInButtonProps> = ({
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
 
+  const onVerifiedRef = useRef(onVerified);
+  useEffect(() => {
+    onVerifiedRef.current = onVerified;
+  }, [onVerified]);
+
   useEffect(() => {
     // Register global listener callback as per phone.email specification
     // Handles both phoneEmailListener(user_json_url, user_json_jwt) and phoneEmailListener(userObj)
@@ -60,8 +65,8 @@ export const SignInButton: React.FC<SignInButtonProps> = ({
         }
       }
 
-      if (onVerified && (finalUrl || directPhone)) {
-        onVerified(finalUrl, directPhone);
+      if (onVerifiedRef.current && (finalUrl || directPhone)) {
+        onVerifiedRef.current(finalUrl, directPhone);
       }
     };
 
@@ -80,7 +85,7 @@ export const SignInButton: React.FC<SignInButtonProps> = ({
         containerRef.current.innerHTML = "";
       }
     };
-  }, [onVerified, clientId]);
+  }, [clientId]);
 
   return (
     <div
