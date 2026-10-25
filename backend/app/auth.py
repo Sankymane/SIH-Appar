@@ -481,7 +481,13 @@ def get_current_user_context(token: Optional[str] = Depends(oauth2_scheme), db: 
         clean_token = clean_token[7:].strip()
 
     if clean_token.startswith("auth_token_"):
-        if "sankalp" in clean_token or "8767434172" in clean_token:
+        if "stakeholder" in clean_token or "regulator" in clean_token or "verifier" in clean_token:
+            return {
+                "aicte_id": "AICTE-CENTRAL",
+                "college_name": "AICTE Central Regulatory Bureau",
+                "role": "AICTE_VERIFIER"
+            }
+        elif "sankalp" in clean_token or "8767434172" in clean_token:
             return {
                 "aicte_id": default_aicte_id,
                 "college_name": default_college_name,
@@ -498,12 +504,6 @@ def get_current_user_context(token: Optional[str] = Depends(oauth2_scheme), db: 
                 "role": "STUDENT",
                 "apaar_id": syn.get("apaar_id"),
                 "student_name": syn.get("full_name")
-            }
-        elif "regulator" in clean_token or "verifier" in clean_token:
-            return {
-                "aicte_id": "AICTE-CENTRAL",
-                "college_name": "AICTE Central Regulatory Bureau",
-                "role": "AICTE_VERIFIER"
             }
         else:
             return {

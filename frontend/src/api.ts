@@ -9,7 +9,9 @@ import {
   ForecastingResult,
   AnalyticsData,
   AuditLogItem,
-  StudentRegistrationPayload
+  StudentRegistrationPayload,
+  ForensicVerificationResult,
+  ForensicSample
 } from "./types";
 import {
   MOCK_FILTERS,
@@ -918,3 +920,53 @@ export async function toggleVerification(student_id: number) {
   });
   return res.json();
 }
+
+/**
+ * Stakeholder Document Forgery Verification API (PhotoHolmes Pipeline)
+ */
+export async function verifyDocument(file: File): Promise<ForensicVerificationResult> {
+  const formData = new FormData();
+  formData.append("file", file);
+
+  const authHeaders = getAuthHeader();
+  const res = await fetch(`${API_BASE}/document-verification/verify`, {
+    method: "POST",
+    headers: {
+      ...authHeaders,
+      // Note: Do not set Content-Type header so the browser sets the multipart boundary automatically
+    },
+    body: formData,
+  });
+
+  if (!res.ok) {
+    let errorMessage = "Document forensic analysis failed.";
+    try {
+      const err = await res.json();
+      if (err.detail) {
+        errorMessage = typeof err.detail === "string" ? err.detail : JSON.stringify(err.detail);
+      }
+    } catch {
+      errorMessage = `Server returned HTTP ${res.status}: ${res.statusText}`;
+    }
+    throw new Error(errorMessage);
+  }
+
+  return await res.json();
+}
+
+/**
+ * Fetch pre-generated sample authentic and tampered certificates for quick demo verification
+ */
+export async function fetchSampleDocuments(): Promise<ForensicSample[]> {
+  try {
+    const res = await fetch(`${API_BASE}/document-verification/samples`, {
+      headers: getAuthHeader(),
+    });
+    if (!res.ok) throw new Error("Failed to load sample documents");
+    return await res.json();
+  } catch (err) {
+    console.warn("Could not fetch samples from server:", err);
+    return [];
+  }
+}
+

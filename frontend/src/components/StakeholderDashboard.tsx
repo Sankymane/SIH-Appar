@@ -57,13 +57,14 @@ import {
 import { AuditTrailView } from "./AuditTrailView";
 import { AutomatedValidationBanner } from "./AutomatedValidationBanner";
 import { CertificatePreviewModal } from "./CertificatePreviewModal";
+import { DocumentVerificationModule } from "./DocumentVerificationModule";
 
 interface StakeholderDashboardProps {
   auth: UserAuthContext;
 }
 
 export const StakeholderDashboard: React.FC<StakeholderDashboardProps> = ({ auth }) => {
-  const [activeTab, setActiveTab] = useState<"alerts" | "directory" | "management" | "forecasting" | "remarks" | "audit">("alerts");
+  const [activeTab, setActiveTab] = useState<"alerts" | "directory" | "management" | "forecasting" | "remarks" | "audit" | "verification">("alerts");
 
   // State data
   const [alerts, setAlerts] = useState<StakeholderAlertItem[]>([]);
@@ -595,6 +596,30 @@ export const StakeholderDashboard: React.FC<StakeholderDashboardProps> = ({ auth
         >
           <Clock size={16} />
           System Audit Trail
+        </button>
+
+        <button
+          onClick={() => {
+            setActiveTab("verification");
+            setSelectedCollegeForRoster(null);
+          }}
+          style={{
+            padding: "10px 18px",
+            border: "none",
+            background: !selectedCollegeForRoster && activeTab === "verification" ? "rgba(5, 150, 105, 0.08)" : "none",
+            borderBottom: !selectedCollegeForRoster && activeTab === "verification" ? "3px solid #059669" : "none",
+            color: !selectedCollegeForRoster && activeTab === "verification" ? "#065f46" : "#475569",
+            fontWeight: 700,
+            fontSize: "13px",
+            cursor: "pointer",
+            display: "flex",
+            alignItems: "center",
+            gap: "8px",
+            borderRadius: "6px 6px 0 0"
+          }}
+        >
+          <ShieldCheck size={16} style={{ color: !selectedCollegeForRoster && activeTab === "verification" ? "#059669" : "inherit" }} />
+          Document Forgery Detection (PhotoHolmes)
         </button>
 
         {selectedCollegeForRoster && (
@@ -1848,6 +1873,9 @@ export const StakeholderDashboard: React.FC<StakeholderDashboardProps> = ({ auth
 
       {/* TAB 6: AUDIT TRAIL */}
       {activeTab === "audit" && <AuditTrailView />}
+
+      {/* TAB 7: PHOTOHOLMES DOCUMENT FORGERY DETECTION */}
+      {activeTab === "verification" && <DocumentVerificationModule />}
         </>
       )}
 

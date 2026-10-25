@@ -235,11 +235,51 @@ export interface StudentRegistrationPayload {
   program?: string;
   department: string;
   level?: string;
-  academic_year?: string;
   enrollment_no?: string;
   apaar_id?: string;
   gender?: string;
   category?: string;
   date_of_birth?: string;
+  academic_year?: string;
 }
 
+export interface AnomalyRegion {
+  id: number;
+  box: [number, number, number, number]; // [x, y, width, height]
+  label: string;
+  tamper_score: number;
+  area_pct?: number;
+}
+
+export interface ForensicVerificationResult {
+  success: boolean;
+  filename: string;
+  file_type: string;
+  file_size_kb: number;
+  image_dimensions: { width: number; height: number };
+  processing_time_ms: number;
+  is_forged: boolean;
+  verdict: "AUTHENTIC" | "SUSPICIOUS" | "TAMPERED_FORGERY";
+  forgery_probability: number;
+  confidence_score: number;
+  forensic_algorithms_used: string[];
+  analysis_summary: string;
+  anomaly_regions: AnomalyRegion[];
+  metrics: {
+    ela_mean_discrepancy: number;
+    noise_variance_divergence: number;
+    jpeg_grid_anomaly_ratio: number;
+  };
+  original_image_base64: string;
+  heatmap_overlay_base64: string;
+  heatmap_raw_base64: string;
+  ela_visual_base64: string;
+}
+
+export interface ForensicSample {
+  id: string;
+  name: string;
+  expected_verdict: "AUTHENTIC" | "TAMPERED_FORGERY";
+  description: string;
+  data_uri: string;
+}
