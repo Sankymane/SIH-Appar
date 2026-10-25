@@ -222,6 +222,8 @@ class PhoneEmailVerifyRequest(BaseModel):
     user_json_url: str
     role: str = "STUDENT"  # STUDENT, INSTITUTE_ADMIN, AICTE_VERIFIER
     identifier: Optional[str] = None  # Optional identifier if supplied by frontend
+    phone_number: Optional[str] = None  # Optional directly verified phone number from widget/JWT
+    college_name: Optional[str] = None  # Optional college name selected by frontend
 
 class AuthTokenResponse(BaseModel):
     access_token: str
@@ -231,6 +233,32 @@ class AuthTokenResponse(BaseModel):
     role: str  # STUDENT, INSTITUTE_ADMIN, AICTE_VERIFIER
     apaar_id: Optional[str] = None
     student_name: Optional[str] = None
+
+class StudentRegisterRequest(BaseModel):
+    full_name: str
+    mobile_number: str
+    email: Optional[str] = None
+    aicte_id: str
+    program: Optional[str] = "Engineering and Technology"
+    department: str
+    level: Optional[str] = "UG"
+    academic_year: Optional[str] = "2026-2027"
+    enrollment_no: Optional[str] = None
+    apaar_id: Optional[str] = None
+    gender: Optional[str] = "Male"
+    category: Optional[str] = "General"
+    date_of_birth: Optional[str] = None
+
+class StudentRegisterResponse(BaseModel):
+    success: bool
+    message: str
+    apaar_id: str
+    full_name: str
+    mobile_number: str
+    aicte_id: str
+    college_name: str
+    enrollment_no: str
+    access_token: Optional[str] = None
 
 # ---------------------------------------------------------------------------
 # Stakeholder Management & Secondary OTP Schemas

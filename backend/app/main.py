@@ -13,7 +13,8 @@ from .routes import (
     reports,
     audit,
     student_routes,
-    stakeholder_routes
+    stakeholder_routes,
+    forensics
 )
 
 # Initialize database schema
@@ -71,6 +72,7 @@ app.include_router(verification.router, prefix="/api/v1")
 app.include_router(analytics.router, prefix="/api/v1")
 app.include_router(reports.router, prefix="/api/v1")
 app.include_router(audit.router, prefix="/api/v1")
+app.include_router(forensics.router, prefix="/api/v1")
 
 @app.get("/health")
 def health_check():
