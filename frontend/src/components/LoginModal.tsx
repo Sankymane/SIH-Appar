@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { searchInstitutions, verifyPhoneEmail, registerStudent } from "../api";
 import { UserAuthContext } from "../types";
 import { SignInButton } from "./SignInButton";
@@ -40,6 +40,11 @@ export const LoginModal: React.FC<LoginModalProps> = ({
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [selectedCollege, setSelectedCollege] = useState<{ aicte_id: string; name: string } | null>(null);
+  const selectedCollegeRef = useRef<{ aicte_id: string; name: string } | null>(null);
+
+  useEffect(() => {
+    selectedCollegeRef.current = selectedCollege;
+  }, [selectedCollege]);
 
   // Student Registration Form State
   const [regFullName, setRegFullName] = useState<string>("");
@@ -67,7 +72,9 @@ export const LoginModal: React.FC<LoginModalProps> = ({
     setStudentAction("SIGNIN");
     setRegSuccessData(null);
     if (initialAicteId && initialCollegeName) {
-      setSelectedCollege({ aicte_id: initialAicteId, name: initialCollegeName });
+      const initCol = { aicte_id: initialAicteId, name: initialCollegeName };
+      setSelectedCollege(initCol);
+      selectedCollegeRef.current = initCol;
     }
   }, [initialMode, initialAicteId, initialCollegeName, isOpen]);
 
@@ -100,18 +107,24 @@ export const LoginModal: React.FC<LoginModalProps> = ({
     setLoading(true);
     setErrorMsg("");
     try {
+      const activeCol = selectedCollegeRef.current || selectedCollege;
       const identifier =
         loginMode === "STUDENT"
           ? undefined
           : loginMode === "STAKEHOLDER"
           ? "AICTE_HQ_NEW_DELHI"
-          : selectedCollege?.aicte_id;
+          : activeCol?.aicte_id;
+      const collegeName =
+        loginMode === "INSTITUTE"
+          ? activeCol?.name
+          : undefined;
 
       const res = await verifyPhoneEmail(
         userJsonUrl,
         loginMode === "STUDENT" ? "STUDENT" : loginMode === "STAKEHOLDER" ? "AICTE_VERIFIER" : "INSTITUTE_ADMIN",
         identifier,
-        verifiedPhone
+        verifiedPhone,
+        collegeName
       );
 
       localStorage.setItem("aicte_token", res.access_token);
@@ -953,71 +966,113 @@ export const LoginModal: React.FC<LoginModalProps> = ({
                 </p>
               </div>
 
-              {/* Optional College Selection Search */}
+              {/* College Selection Search */}
               <div style={{ marginBottom: "16px" }}>
                 <label style={{ display: "block", fontSize: "12px", fontWeight: 700, color: "#334155", marginBottom: "6px" }}>
-                  Select Institution (Optional):
+                  Selected Institution:
                 </label>
-                <div style={{ position: "relative" }}>
-                  <input
-                    type="text"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder="Search college name or AICTE ID..."
-                    style={{
-                      width: "100%",
-                      padding: "9px 12px 9px 34px",
-                      borderRadius: "6px",
-                      border: "1px solid #cbd5e1",
-                      fontSize: "12px",
-                      boxSizing: "border-box",
-                    }}
-                  />
-                  <Search
-                    size={15}
-                    color="#64748b"
-                    style={{ position: "absolute", left: "10px", top: "50%", transform: "translateY(-50%)" }}
-                  />
-                </div>
 
-                {selectedCollege && (
-                  <div style={{ marginTop: "6px", fontSize: "12px", color: "#166534", fontWeight: 700 }}>
-                    Selected: {selectedCollege.name} ({selectedCollege.aicte_id})
-                  </div>
-                )}
-
-                {searchResults.length > 0 && (
+                {selectedCollege ? (
                   <div
                     style={{
-                      maxHeight: "130px",
-                      overflowY: "auto",
-                      border: "1px solid #e2e8f0",
-                      borderRadius: "6px",
-                      background: "#ffffff",
-                      marginTop: "4px",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      padding: "10px 14px",
+                      background: "#f0fdf4",
+                      border: "1.5px solid #86efac",
+                      borderRadius: "8px",
                     }}
                   >
-                    {searchResults.map((c) => (
-                      <div
-                        key={c.aicte_id}
-                        onClick={() => {
-                          setSelectedCollege(c);
-                          setSearchResults([]);
-                          setSearchQuery("");
-                        }}
-                        style={{
-                          padding: "8px 12px",
-                          borderBottom: "1px solid #f1f5f9",
-                          cursor: "pointer",
-                          fontSize: "12px",
-                        }}
-                        onMouseEnter={(e) => (e.currentTarget.style.background = "#fff7ed")}
-                        onMouseLeave={(e) => (e.currentTarget.style.background = "#ffffff")}
-                      >
-                        <div style={{ fontWeight: 700, color: "#0B2265" }}>{c.name}</div>
-                        <div style={{ fontSize: "11px", color: "#64748b" }}>{c.aicte_id}</div>
+                    <div>
+                      <div style={{ fontWeight: 800, color: "#166534", fontSize: "13px" }}>{selectedCollege.name}</div>
+                      <div style={{ fontSize: "11px", color: "#15803d", marginTop: "2px" }}>
+                        AICTE Permanent ID: <b>{selectedCollege.aicte_id}</b>
                       </div>
-                    ))}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSelectedCollege(null);
+                        selectedCollegeRef.current = null;
+                        setSearchQuery("");
+                      }}
+                      style={{
+                        background: "transparent",
+                        border: "none",
+                        color: "#dc2626",
+                        cursor: "pointer",
+                        fontSize: "12px",
+                        fontWeight: 700,
+                      }}
+                    >
+                      Change
+                    </button>
+                  </div>
+                ) : (
+                  <div style={{ position: "relative" }}>
+                    <input
+                      type="text"
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      placeholder="Search college name or AICTE ID..."
+                      style={{
+                        width: "100%",
+                        padding: "9px 12px 9px 34px",
+                        borderRadius: "6px",
+                        border: "1px solid #cbd5e1",
+                        fontSize: "12px",
+                        boxSizing: "border-box",
+                      }}
+                    />
+                    <Search
+                      size={15}
+                      color="#64748b"
+                      style={{ position: "absolute", left: "10px", top: "50%", transform: "translateY(-50%)" }}
+                    />
+
+                    {searchResults.length > 0 && (
+                      <div
+                        style={{
+                          position: "absolute",
+                          top: "100%",
+                          left: 0,
+                          right: 0,
+                          maxHeight: "150px",
+                          overflowY: "auto",
+                          border: "1px solid #e2e8f0",
+                          borderRadius: "6px",
+                          background: "#ffffff",
+                          marginTop: "4px",
+                          zIndex: 100,
+                          boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1)",
+                        }}
+                      >
+                        {searchResults.map((c) => (
+                          <div
+                            key={c.aicte_id}
+                            onClick={() => {
+                              const chosen = { aicte_id: c.aicte_id, name: c.name };
+                              setSelectedCollege(chosen);
+                              selectedCollegeRef.current = chosen;
+                              setSearchResults([]);
+                              setSearchQuery("");
+                            }}
+                            style={{
+                              padding: "8px 12px",
+                              borderBottom: "1px solid #f1f5f9",
+                              cursor: "pointer",
+                              fontSize: "12px",
+                            }}
+                            onMouseEnter={(e) => (e.currentTarget.style.background = "#fff7ed")}
+                            onMouseLeave={(e) => (e.currentTarget.style.background = "#ffffff")}
+                          >
+                            <div style={{ fontWeight: 700, color: "#0B2265" }}>{c.name}</div>
+                            <div style={{ fontSize: "11px", color: "#64748b" }}>{c.aicte_id}</div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 )}
               </div>

@@ -487,16 +487,16 @@ def get_current_user_context(token: Optional[str] = Depends(oauth2_scheme), db: 
                 "college_name": "AICTE Central Regulatory Bureau",
                 "role": "AICTE_VERIFIER"
             }
-        elif "sankalp" in clean_token or "8767434172" in clean_token:
+        elif "sankalp" in clean_token or "student" in clean_token:
             return {
                 "aicte_id": default_aicte_id,
                 "college_name": default_college_name,
-                "role": "STUDENT" if "student" in clean_token or "sankalp" in clean_token else "INSTITUTE_ADMIN",
+                "role": "STUDENT",
                 "apaar_id": "126430259751",
                 "student_name": "SANKALP HEMANT MANE"
             }
         elif "synthetic_" in clean_token:
-            phone_part = clean_token.replace("auth_token_synthetic_", "").strip()
+            phone_part = clean_token.replace("auth_token_synthetic_", "").split("_")[0].strip()
             syn = SYNTHETIC_STUDENT_PROFILES.get(phone_part, {})
             return {
                 "aicte_id": syn.get("aicte_id", default_aicte_id),
@@ -506,9 +506,17 @@ def get_current_user_context(token: Optional[str] = Depends(oauth2_scheme), db: 
                 "student_name": syn.get("full_name")
             }
         else:
+            # Check if an aicte_id was encoded in the token (e.g. auth_token_8767434172_1-44525213207)
+            target_col = None
+            for part in clean_token.split("_"):
+                if part.startswith("1-") or part.count("-") >= 1:
+                    target_col = db.query(College).filter(College.aicte_id == part).first()
+                    if target_col:
+                        break
+
             return {
-                "aicte_id": default_aicte_id,
-                "college_name": default_college_name,
+                "aicte_id": target_col.aicte_id if target_col else default_aicte_id,
+                "college_name": target_col.name if target_col else default_college_name,
                 "role": "INSTITUTE_ADMIN"
             }
 
