@@ -2,16 +2,17 @@ from __future__ import annotations
 import io
 import time
 import base64
+from typing import Dict, Any, List, Optional, Tuple
+
 import numpy as np
 from PIL import Image, ImageChops, ImageEnhance
 import cv2
-from typing import Dict, Any, List, Optional, Tuple
-
 import pypdfium2 as pdfium
 
 # Attempt photoholmes import safely with fallback
 PHOTOHOLMES_AVAILABLE = False
 try:
+    # pyrefly: ignore[missing-import]
     from photoholmes.methods.zero import Zero, zero_preprocessing
     PHOTOHOLMES_AVAILABLE = True
     _ZERO_MODEL = Zero()
