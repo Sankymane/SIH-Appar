@@ -231,20 +231,54 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ auth }) => {
                   flexShrink: 0
                 }}
               >
-                <img
-                  src={abcCardImg}
-                  alt="Student DigiLocker Photograph"
-                  style={{
-                    width: "100%",
-                    height: "100%",
-                    objectFit: "cover",
-                    objectPosition: "top"
-                  }}
-                  onError={(e) => {
-                    // Fallback to stylized SVG avatar if image loading fails
-                    e.currentTarget.style.display = "none";
-                  }}
-                />
+                {profile?.apaar_id === "126430259751" ? (
+                  <img
+                    src={abcCardImg}
+                    alt="Student DigiLocker Photograph"
+                    style={{
+                      width: "100%",
+                      height: "100%",
+                      objectFit: "cover",
+                      objectPosition: "top"
+                    }}
+                  />
+                ) : (
+                  <div
+                    style={{
+                      width: "100%",
+                      height: "100%",
+                      display: "flex",
+                      flexDirection: "column",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      background: "linear-gradient(135deg, #0B2265 0%, #1e3a8a 100%)",
+                      color: "#ffffff",
+                      padding: "8px",
+                      textAlign: "center",
+                    }}
+                  >
+                    <div
+                      style={{
+                        width: "48px",
+                        height: "48px",
+                        borderRadius: "50%",
+                        background: "rgba(255,255,255,0.2)",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        fontSize: "18px",
+                        fontWeight: 800,
+                        letterSpacing: "1px",
+                        marginBottom: "6px",
+                      }}
+                    >
+                      {profile?.full_name?.split(" ").map((w) => w[0]).slice(0, 2).join("") || "ST"}
+                    </div>
+                    <div style={{ fontSize: "10px", fontWeight: 700, color: "#86efac", display: "flex", alignItems: "center", gap: "2px" }}>
+                      <CheckCircle2 size={10} /> VERIFIED
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
 
